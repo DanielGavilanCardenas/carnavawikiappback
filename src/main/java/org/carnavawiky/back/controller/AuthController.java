@@ -8,6 +8,8 @@ import org.carnavawiky.back.dto.auth.TokenResponse;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.dto.auth.LoginRequest;
 import org.carnavawiky.back.service.AuthService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @Tag(name = "Autenticación", description = "Endpoints para el registro, login y manejo de tokens.")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
 
     @Autowired
     private AuthService authService;
@@ -34,15 +39,13 @@ public class AuthController {
     public ResponseEntity<Usuario> registerUser(@Valid @RequestBody RegisterRequest request) {
         Usuario usuario = authService.register(request);
 
-        // Opcional y Temporal: Imprimir el token generado en la consola para depuración
-        // System.out.println("TOKEN GENERADO POR SERVICE (DB): " + usuario.getActivationToken());
-
         // CRÍTICO DE SEGURIDAD: Limpiamos el token de activación antes de devolver el objeto
         // para que no sea visible en la respuesta HTTP. El token está guardado en la DB.
         usuario.setActivationToken(null);
 
-        // NOTA: Aquí iría la lógica para enviar el email de activación.
+        // TODO: Aquí iría la lógica para enviar el email de activación.
 
+        logger.info("Usuario registrado " + request.getUsername());
         return new ResponseEntity<>(usuario, HttpStatus.CREATED);
     }
 
@@ -85,5 +88,5 @@ public class AuthController {
         return ResponseEntity.ok("Acceso concedido al usuario autenticado.");
     }
 
-    // NOTA: Los endpoints para refreshToken y activationToken se añadirán en pasos posteriores.
+    // TODO: Los endpoints para refreshToken y activationToken se añadirán en pasos posteriores.
 }
