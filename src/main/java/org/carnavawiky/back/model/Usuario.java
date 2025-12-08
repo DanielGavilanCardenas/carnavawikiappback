@@ -2,88 +2,86 @@ package org.carnavawiky.back.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Data
 @Entity
 @Table(name = "usuario")
-@EntityListeners(AuditingEntityListener.class) // Necesario para la Auditoría
+@Data
+@NoArgsConstructor
 public class Usuario implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false)
-    private String password; // Contraseña cifrada
-
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
-    // Campos de la BBDD del usuario
-    private boolean enabled = false; // Estado de activación (Activación por email)
+    @Column(nullable = false)
+    private String password;
 
+    @Column(name = "fecha_alta", nullable = false)
+    private LocalDateTime fechaAlta = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private boolean enabled = false;
+
+    // Campo usado para la activación por email (registro)
     @Column(name = "activation_token")
-    private String activationToken;  // Token para el proceso de activación
+    private String activationToken;
 
     // =======================================================
-    // AUDITORÍA
+    // NUEVOS CAMPOS PARA RECUPERACIÓN DE CONTRASEÑA
     // =======================================================
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime fechaAlta;
+    @Column(name = "reset_token")
+    private String resetToken;
 
-    // =======================================================
-    // RELACIONES
+    @Column(name = "reset_token_expiry_date")
+    private LocalDateTime resetTokenExpiryDate;
     // =======================================================
 
-    // Relación Muchos a Muchos (M:M) con Roles
-    // Usamos FetchType.EAGER para asegurar que los roles se carguen al autenticar al usuario
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "usuario_roles",
+            name = "usuario_role",
             joinColumns = @JoinColumn(name = "usuario_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
-    // Relación Uno a Uno (1:1) con Perfil (se implementará más adelante)
-    // @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // private Perfil perfil;
-
-    // =======================================================
-    // IMPLEMENTACIÓN UserDetails (Spring Security)
-    // =======================================================
-
+    // Implementación de UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Mapea los Roles a GrantedAuthority (ej: ROLE_ADMIN -> SimpleGrantedAuthority("ROLE_ADMIN"))
-        return roles.stream()
+        return this.roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-    @Override
-    public boolean isEnabled() { return enabled; }
+    // isEnabled ya usa el campo 'enabled' gracias a Lombok @Data
 }

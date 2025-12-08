@@ -2,22 +2,25 @@ package org.carnavawiky.back.repository;
 
 import org.carnavawiky.back.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    // Necesario para la autenticación y el registro (validar si existe)
     Optional<Usuario> findByUsername(String username);
 
-    // Necesario para el registro (validar si el email ya existe)
-    boolean existsByEmail(String email);
+    // Método necesario para la validación de unicidad en POST/PUT
+    Boolean existsByUsername(String username);
+    Boolean existsByEmail(String email);
 
-    // Necesario para el registro (validar si el username ya existe)
-    boolean existsByUsername(String username);
-
-    // Necesario para la activación por email
+    // Método para buscar en el flujo de Activación
     Optional<Usuario> findByActivationToken(String activationToken);
+
+    // Método para buscar en el flujo de Reseteo (por email)
+    Optional<Usuario> findByEmail(String email);
+
+    // =======================================================
+    // 🔑 MÉTODO REQUERIDO PARA EL RESETEO DE CONTRASEÑA
+    // =======================================================
+    Optional<Usuario> findByResetToken(String resetToken);
 }
