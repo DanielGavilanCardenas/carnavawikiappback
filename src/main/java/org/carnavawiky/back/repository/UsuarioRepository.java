@@ -9,6 +9,10 @@ import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
+    // NUEVO MÉTODO PARA BÚSQUEDA (Pagina y filtra por username o email)
+    Page<Usuario> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String username, String email, Pageable pageable);
+
     Optional<Usuario> findByUsername(String username);
 
     // Método necesario para la validación de unicidad en POST/PUT

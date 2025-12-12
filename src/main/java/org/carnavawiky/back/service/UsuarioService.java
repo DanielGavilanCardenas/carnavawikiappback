@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -85,19 +86,18 @@ public class UsuarioService {
 
     // =======================================================
     // 3. OBTENER TODOS (GET) - CON PAGINACIÓN Y BÚSQUEDA
+    // REEMPLAZA a 'public List<UsuarioResponse> obtenerTodosUsuarios()'
     // =======================================================
-
     @Transactional(readOnly = true)
-    // MODIFIED SIGNATURE AND RETURN TYPE
-    public PageResponse<UsuarioResponse> obtenerTodosUsuarios(Pageable pageable, String search) {
+    public PageResponse<UsuarioResponse> obtenerTodosUsuarios(Pageable pageable, String search) { // << NUEVA FIRMA
 
         Page<Usuario> usuarioPage;
 
-        if (search != null && !search.trim().isEmpty()) {
-            // Si hay término de búsqueda, usamos el método del repositorio con filtro por username O email
-            usuarioPage = usuarioRepository.findAllByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(search, search, pageable);
+        if (StringUtils.hasText(search)) {
+            // Si hay búsqueda, busca por username o email
+            usuarioPage = usuarioRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(search, search, pageable);
         } else {
-            // Si no hay término de búsqueda, usamos findAll para paginar todos los usuarios
+            // Si no hay búsqueda, usa la paginación normal
             usuarioPage = usuarioRepository.findAll(pageable);
         }
 

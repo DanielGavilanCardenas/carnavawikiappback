@@ -35,15 +35,16 @@ public class UsuarioController {
     }
 
     // =======================================================
-    // 2. OBTENER TODOS (GET) - CON PAGINACIÓN Y BÚSQUEDA
+    // 2. OBTENER TODOS (GET) - CON PAGINACIÓN Y BÚSQUEDA - Solo para ADMIN
+    // MODIFICADO para usar Pageable, search y devolver PageResponse
     // =======================================================
     @GetMapping
-    public ResponseEntity<PageResponse<UsuarioResponse>> obtenerTodosUsuarios(
-            Pageable pageable, // Maneja page, size, y sort (ej: ?page=0&size=10&sort=username,asc)
-            @RequestParam(required = false) String search // Permite el filtro opcional por username o email
-    ) {
-        PageResponse<UsuarioResponse> usuarios = usuarioService.obtenerTodosUsuarios(pageable, search);
-        return ResponseEntity.ok(usuarios);
+    public ResponseEntity<PageResponse<UsuarioResponse>> obtenerTodosUsuarios( // << TIPO DE RETORNO MODIFICADO
+                                                                               Pageable pageable, // Spring inyecta Pageable
+                                                                               @RequestParam(required = false) String search) { // Parámetro de búsqueda
+
+        PageResponse<UsuarioResponse> usuariosPage = usuarioService.obtenerTodosUsuarios(pageable, search);
+        return ResponseEntity.ok(usuariosPage);
     }
 
     // =======================================================

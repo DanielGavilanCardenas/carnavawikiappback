@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,17 +66,16 @@ public class AgrupacionService {
     // =======================================================
     // MÉTODO 3: OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
     // =======================================================
-
     @Transactional(readOnly = true)
-    public PageResponse<AgrupacionResponse> obtenerTodasAgrupaciones(Pageable pageable, String search) {
+    public PageResponse<AgrupacionResponse> obtenerTodasAgrupaciones(Pageable pageable, String search) { // << FIRMA MODIFICADA
 
         Page<Agrupacion> agrupacionPage;
 
-        if (search != null && !search.trim().isEmpty()) {
-            // Si hay término de búsqueda, usamos el método del repositorio con filtro
-            agrupacionPage = agrupacionRepository.findAllByNombreContainingIgnoreCase(search, pageable);
+        if (StringUtils.hasText(search)) {
+            // Si hay búsqueda, usamos el método del Repository que filtra por nombre o descripción
+            agrupacionPage = agrupacionRepository.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(search, search, pageable);
         } else {
-            // Si no hay término de búsqueda, usamos findAll para paginar todas las agrupaciones
+            // Si no hay búsqueda, usamos la paginación normal
             agrupacionPage = agrupacionRepository.findAll(pageable);
         }
 

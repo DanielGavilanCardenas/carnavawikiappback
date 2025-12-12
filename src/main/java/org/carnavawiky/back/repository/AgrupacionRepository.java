@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AgrupacionRepository extends JpaRepository<Agrupacion, Long> {
 
+    // NUEVO MÉTODO PARA BÚSQUEDA (Pagina y filtra por nombre o descripción)
+    Page<Agrupacion> findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(
+            String nombre, String descripcion, Pageable pageable);
+
     // Método para buscar agrupaciones por una parte de su nombre, ignorando mayúsculas/minúsculas, con paginación.
     Page<Agrupacion> findAllByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 }

@@ -36,16 +36,16 @@ public class AgrupacionController {
 
     // =======================================================
     // 2. OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
-    // Accesible por USER y ADMIN.
+    // MODIFICADO para usar Pageable, search y devolver PageResponse
     // =======================================================
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<PageResponse<AgrupacionResponse>> obtenerTodasAgrupaciones(
-            Pageable pageable, // Maneja page, size, y sort (ej: ?page=0&size=10&sort=nombre,asc)
-            @RequestParam(required = false) String search // Permite el filtro opcional por nombre (ej: &search=chirigota)
-    ) {
-        PageResponse<AgrupacionResponse> response = agrupacionService.obtenerTodasAgrupaciones(pageable, search);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<PageResponse<AgrupacionResponse>> obtenerTodasAgrupaciones( // << TIPO DE RETORNO MODIFICADO
+                                                                                      Pageable pageable, // Spring inyecta Pageable
+                                                                                      @RequestParam(required = false) String search) { // Parámetro de búsqueda
+
+        PageResponse<AgrupacionResponse> agrupacionesPage = agrupacionService.obtenerTodasAgrupaciones(pageable, search);
+        return ResponseEntity.ok(agrupacionesPage);
     }
 
     // =======================================================
