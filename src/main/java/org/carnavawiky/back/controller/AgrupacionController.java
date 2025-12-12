@@ -3,8 +3,10 @@ package org.carnavawiky.back.controller;
 import jakarta.validation.Valid;
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
+import org.carnavawiky.back.dto.PageResponse; // <-- NUEVA IMPORTACIÓN
 import org.carnavawiky.back.service.AgrupacionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,14 +35,17 @@ public class AgrupacionController {
     }
 
     // =======================================================
-    // 2. OBTENER TODAS (GET)
+    // 2. OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
     // Accesible por USER y ADMIN.
     // =======================================================
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<List<AgrupacionResponse>> obtenerTodasAgrupaciones() {
-        List<AgrupacionResponse> agrupaciones = agrupacionService.obtenerTodasAgrupaciones();
-        return ResponseEntity.ok(agrupaciones);
+    public ResponseEntity<PageResponse<AgrupacionResponse>> obtenerTodasAgrupaciones(
+            Pageable pageable, // Maneja page, size, y sort (ej: ?page=0&size=10&sort=nombre,asc)
+            @RequestParam(required = false) String search // Permite el filtro opcional por nombre (ej: &search=chirigota)
+    ) {
+        PageResponse<AgrupacionResponse> response = agrupacionService.obtenerTodasAgrupaciones(pageable, search);
+        return ResponseEntity.ok(response);
     }
 
     // =======================================================

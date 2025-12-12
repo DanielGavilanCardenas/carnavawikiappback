@@ -3,8 +3,10 @@ package org.carnavawiky.back.controller;
 import jakarta.validation.Valid;
 import org.carnavawiky.back.dto.UsuarioRequest;
 import org.carnavawiky.back.dto.UsuarioResponse;
+import org.carnavawiky.back.dto.PageResponse; // <-- NUEVA IMPORTACIÓN
 import org.carnavawiky.back.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,11 +35,14 @@ public class UsuarioController {
     }
 
     // =======================================================
-    // 2. OBTENER TODOS (GET) - Solo para ADMIN
+    // 2. OBTENER TODOS (GET) - CON PAGINACIÓN Y BÚSQUEDA
     // =======================================================
     @GetMapping
-    public ResponseEntity<List<UsuarioResponse>> obtenerTodosUsuarios() {
-        List<UsuarioResponse> usuarios = usuarioService.obtenerTodosUsuarios();
+    public ResponseEntity<PageResponse<UsuarioResponse>> obtenerTodosUsuarios(
+            Pageable pageable, // Maneja page, size, y sort (ej: ?page=0&size=10&sort=username,asc)
+            @RequestParam(required = false) String search // Permite el filtro opcional por username o email
+    ) {
+        PageResponse<UsuarioResponse> usuarios = usuarioService.obtenerTodosUsuarios(pageable, search);
         return ResponseEntity.ok(usuarios);
     }
 

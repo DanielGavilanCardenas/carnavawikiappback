@@ -2,6 +2,7 @@ package org.carnavawiky.back.service;
 
 import org.carnavawiky.back.dto.UsuarioRequest;
 import org.carnavawiky.back.dto.UsuarioResponse;
+import org.carnavawiky.back.dto.PageResponse; // <-- NUEVA IMPORTACIÓN
 import org.carnavawiky.back.exception.BadRequestException;
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.UsuarioMapper;
@@ -10,6 +11,8 @@ import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.RoleRepository;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // <-- NUEVA IMPORTACIÓN
+import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +35,6 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioMapper usuarioMapper;
-
-
 
 
     // =======================================================
@@ -83,14 +84,28 @@ public class UsuarioService {
     }
 
     // =======================================================
-    // 3. OBTENER TODOS (GET)
+    // 3. OBTENER TODOS (GET) - CON PAGINACIÓN Y BÚSQUEDA
     // =======================================================
 
     @Transactional(readOnly = true)
-    public List<UsuarioResponse> obtenerTodosUsuarios() {
-        return usuarioRepository.findAll().stream()
-                .map(usuarioMapper::toResponse)
-                .collect(Collectors.toList());
+    // MODIFIED SIGNATURE AND RETURN TYPE
+    public PageResponse<UsuarioResponse> obtenerTodosUsuarios(Pageable pageable, String search) {
+
+        Page<Usuario> usuarioPage;
+
+        if (search != null && !search.trim().isEmpty()) {
+            // Si hay término de búsqueda, usamos el método del repositorio con filtro por username O email
+            usuarioPage = usuarioRepository.findAllByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(search, search, pageable);
+        } else {
+            // Si no hay término de búsqueda, usamos findAll para paginar todos los usuarios
+            usuarioPage = usuarioRepository.findAll(pageable);
+        }
+
+        // 2. Mapear el contenido de la página a UsuarioResponse
+        Page<UsuarioResponse> responsePage = usuarioPage.map(usuarioMapper::toResponse);
+
+        // 3. Construir y retornar el objeto PageResponse
+        return PageResponse.fromPage(responsePage);
     }
 
     // =======================================================

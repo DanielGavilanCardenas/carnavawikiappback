@@ -1,6 +1,8 @@
 package org.carnavawiky.back.repository;
 
 import org.carnavawiky.back.model.Usuario;
+import org.springframework.data.domain.Page; // <-- NUEVA IMPORTACIÓN
+import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -23,4 +25,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // 🔑 MÉTODO REQUERIDO PARA EL RESETEO DE CONTRASEÑA
     // =======================================================
     Optional<Usuario> findByResetToken(String resetToken);
+
+    // =======================================================
+    // 🔍 NUEVO MÉTODO PARA PAGINACIÓN Y BÚSQUEDA
+    // =======================================================
+    // Permite buscar por parte del username O del email, ignorando mayúsculas, con paginación.
+    Page<Usuario> findAllByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email, Pageable pageable);
 }
