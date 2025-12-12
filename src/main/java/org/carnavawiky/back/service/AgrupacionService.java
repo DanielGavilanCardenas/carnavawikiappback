@@ -2,7 +2,7 @@ package org.carnavawiky.back.service;
 
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
-import org.carnavawiky.back.dto.PageResponse; // <-- NUEVA IMPORTACIÓN
+import org.carnavawiky.back.dto.PageResponse; // << IMPORTAR
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.AgrupacionMapper;
 import org.carnavawiky.back.model.Agrupacion;
@@ -10,12 +10,12 @@ import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.AgrupacionRepository;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page; // <-- NUEVA IMPORTACIÓN
-import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
+import org.springframework.data.domain.Page; // << IMPORTAR
+import org.springframework.data.domain.Pageable; // << IMPORTAR
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import org.springframework.util.StringUtils; // << NUEVA IMPORTACIÓN (para búsqueda)
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,6 +44,7 @@ public class AgrupacionService {
         Usuario usuarioCreador = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", username));
 
+        // El mapper ya maneja la modalidad
         Agrupacion agrupacion = agrupacionMapper.toEntity(request, usuarioCreador);
 
         Agrupacion nuevaAgrupacion = agrupacionRepository.save(agrupacion);
@@ -65,14 +66,15 @@ public class AgrupacionService {
 
     // =======================================================
     // MÉTODO 3: OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
+    // Sustituye al método List<AgrupacionResponse> obtenerTodasAgrupaciones()
     // =======================================================
     @Transactional(readOnly = true)
-    public PageResponse<AgrupacionResponse> obtenerTodasAgrupaciones(Pageable pageable, String search) { // << FIRMA MODIFICADA
+    public PageResponse<AgrupacionResponse> obtenerTodasAgrupaciones(Pageable pageable, String search) { // << FIRMA CORREGIDA
 
         Page<Agrupacion> agrupacionPage;
 
         if (StringUtils.hasText(search)) {
-            // Si hay búsqueda, usamos el método del Repository que filtra por nombre o descripción
+            // Si hay término de búsqueda, usamos el nuevo método del Repository
             agrupacionPage = agrupacionRepository.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(search, search, pageable);
         } else {
             // Si no hay búsqueda, usamos la paginación normal
@@ -87,7 +89,7 @@ public class AgrupacionService {
     }
 
     // =======================================================
-    // MÉTODO 4: ACTUALIZAR (PUT /ID)
+    // MÉTODO 4: ACTUALIZAR (PUT /ID) - CORREGIDO: AÑADIDA MODALIDAD
     // =======================================================
 
     @Transactional
@@ -99,6 +101,7 @@ public class AgrupacionService {
         // 2. Actualizar campos
         agrupacionExistente.setNombre(request.getNombre());
         agrupacionExistente.setDescripcion(request.getDescripcion());
+        agrupacionExistente.setModalidad(request.getModalidad()); // << AÑADIDO: CORRECCIÓN DE LÓGICA
 
         // 3. Guardar y retornar
         Agrupacion agrupacionActualizada = agrupacionRepository.save(agrupacionExistente);

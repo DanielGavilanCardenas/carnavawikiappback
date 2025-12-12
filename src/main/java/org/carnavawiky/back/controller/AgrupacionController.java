@@ -3,10 +3,10 @@ package org.carnavawiky.back.controller;
 import jakarta.validation.Valid;
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
-import org.carnavawiky.back.dto.PageResponse; // <-- NUEVA IMPORTACIÓN
+import org.carnavawiky.back.dto.PageResponse; // << IMPORTAR
 import org.carnavawiky.back.service.AgrupacionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
+import org.springframework.data.domain.Pageable; // << IMPORTAR
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,7 +36,7 @@ public class AgrupacionController {
 
     // =======================================================
     // 2. OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
-    // MODIFICADO para usar Pageable, search y devolver PageResponse
+    // CORREGIDO: Ahora usa Pageable y devuelve PageResponse
     // =======================================================
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")

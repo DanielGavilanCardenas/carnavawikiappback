@@ -23,6 +23,10 @@ public class Agrupacion {
     @Column(length = 1000)
     private String descripcion;
 
+    @Enumerated(EnumType.STRING) // Persiste el nombre del Enum como String en la BBDD
+    @Column(nullable = false)
+    private Modalidad modalidad;
+
     // =======================================================
     // AUDITORÍA
     // =======================================================

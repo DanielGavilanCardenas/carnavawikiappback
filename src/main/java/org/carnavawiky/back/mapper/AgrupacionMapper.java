@@ -20,6 +20,7 @@ public class AgrupacionMapper {
         agrupacion.setNombre(request.getNombre());
         agrupacion.setDescripcion(request.getDescripcion());
         agrupacion.setUsuarioCreador(usuarioCreador); // Vinculamos el creador
+        agrupacion.setModalidad(request.getModalidad());
         return agrupacion;
     }
 
@@ -34,6 +35,7 @@ public class AgrupacionMapper {
         response.setNombre(entity.getNombre());
         response.setDescripcion(entity.getDescripcion());
         response.setFechaAlta(entity.getFechaAlta());
+        response.setModalidad(entity.getModalidad());
 
         // Mapeamos el nombre del usuario creador para la respuesta
         response.setNombreUsuarioCreador(entity.getUsuarioCreador().getUsername());
