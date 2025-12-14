@@ -40,8 +40,14 @@ public class Agrupacion {
     // =======================================================
 
     // Relación Muchos a Uno (N:1) con el Usuario que la creó
-    // Usamos FetchType.LAZY por defecto.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_creador_id", nullable = false)
     private Usuario usuarioCreador;
+
+    // =======================================================
+    // AÑADIDO: Localidad (N:1)
+    // =======================================================
+    @ManyToOne(fetch = FetchType.EAGER) // Se carga al obtener la Agrupación (preferible para catálogos pequeños)
+    @JoinColumn(name = "localidad_id", nullable = false) // Columna de clave foránea
+    private Localidad localidad;
 }

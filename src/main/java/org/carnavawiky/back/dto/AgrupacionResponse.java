@@ -1,7 +1,7 @@
 package org.carnavawiky.back.dto;
 
 import lombok.Data;
-import org.carnavawiky.back.model.Modalidad; // << IMPORTAR
+import org.carnavawiky.back.model.Modalidad;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,7 +14,13 @@ public class AgrupacionResponse {
     private String nombreUsuarioCreador; // Mostramos solo el nombre del creador
 
     // =======================================================
-    // AÑADIDO: Modalidad
+    // EXISTENTE: Modalidad
     // =======================================================
     private Modalidad modalidad;
+
+    // =======================================================
+    // AÑADIDO: Datos de Localidad
+    // =======================================================
+    private Long localidadId;
+    private String localidadNombre;
 }

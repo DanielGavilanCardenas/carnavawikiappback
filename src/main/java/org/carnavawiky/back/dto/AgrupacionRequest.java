@@ -19,5 +19,11 @@ public class AgrupacionRequest {
     @NotNull(message = "La modalidad no puede ser nula.") // Validamos que se envíe el campo
     private Modalidad modalidad; // El JSON debe enviar "CHIRIGOTA", "COMPARSA", etc.
 
+    // =======================================================
+    // AÑADIDO: ID de la Localidad
+    // =======================================================
+    @NotNull(message = "El ID de la Localidad es obligatorio.")
+    private Long localidadId;
+
     // NOTA: No incluimos el ID ni el usuario creador, ya que se gestionan en el backend.
 }

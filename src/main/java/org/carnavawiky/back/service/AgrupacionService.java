@@ -2,20 +2,22 @@ package org.carnavawiky.back.service;
 
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
-import org.carnavawiky.back.dto.PageResponse; // << IMPORTAR
+import org.carnavawiky.back.dto.PageResponse;
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.AgrupacionMapper;
 import org.carnavawiky.back.model.Agrupacion;
+import org.carnavawiky.back.model.Localidad; // << NUEVA IMPORTACIÓN
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.AgrupacionRepository;
+import org.carnavawiky.back.repository.LocalidadRepository; // << NUEVA IMPORTACIÓN
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page; // << IMPORTAR
-import org.springframework.data.domain.Pageable; // << IMPORTAR
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils; // << NUEVA IMPORTACIÓN (para búsqueda)
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +35,14 @@ public class AgrupacionService {
     private AgrupacionMapper agrupacionMapper;
 
     // =======================================================
-    // MÉTODO 1: CREAR (POST)
+    // AÑADIDO: REPOSITORIO DE LOCALIDAD
+    // =======================================================
+    @Autowired
+    private LocalidadRepository localidadRepository;
+
+
+    // =======================================================
+    // MÉTODO 1: CREAR (POST) - MODIFICADO para Localidad
     // =======================================================
 
     @Transactional
@@ -44,8 +53,12 @@ public class AgrupacionService {
         Usuario usuarioCreador = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", username));
 
-        // El mapper ya maneja la modalidad
-        Agrupacion agrupacion = agrupacionMapper.toEntity(request, usuarioCreador);
+        // 1. Buscar la Localidad por el ID (si no existe, lanza 404)
+        Localidad localidad = localidadRepository.findById(request.getLocalidadId())
+                .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", request.getLocalidadId()));
+
+        // 2. Mapear y guardar, pasando la Localidad
+        Agrupacion agrupacion = agrupacionMapper.toEntity(request, usuarioCreador, localidad); // << FIRMA MODIFICADA
 
         Agrupacion nuevaAgrupacion = agrupacionRepository.save(agrupacion);
 
@@ -66,44 +79,48 @@ public class AgrupacionService {
 
     // =======================================================
     // MÉTODO 3: OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
-    // Sustituye al método List<AgrupacionResponse> obtenerTodasAgrupaciones()
     // =======================================================
     @Transactional(readOnly = true)
-    public PageResponse<AgrupacionResponse> obtenerTodasAgrupaciones(Pageable pageable, String search) { // << FIRMA CORREGIDA
+    public PageResponse<AgrupacionResponse> obtenerTodasAgrupaciones(Pageable pageable, String search) {
 
         Page<Agrupacion> agrupacionPage;
 
         if (StringUtils.hasText(search)) {
-            // Si hay término de búsqueda, usamos el nuevo método del Repository
+            // Utilizamos el método de búsqueda por nombre o descripción (existente en el repositorio)
             agrupacionPage = agrupacionRepository.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(search, search, pageable);
         } else {
-            // Si no hay búsqueda, usamos la paginación normal
+            // Paginación simple
             agrupacionPage = agrupacionRepository.findAll(pageable);
         }
 
-        // 2. Mapear el contenido de la página a AgrupacionResponse
+        // Mapear el contenido de la página a AgrupacionResponse
         Page<AgrupacionResponse> responsePage = agrupacionPage.map(agrupacionMapper::toResponse);
 
-        // 3. Construir y retornar el objeto PageResponse
+        // Construir y retornar el objeto PageResponse
         return PageResponse.fromPage(responsePage);
     }
 
     // =======================================================
-    // MÉTODO 4: ACTUALIZAR (PUT /ID) - CORREGIDO: AÑADIDA MODALIDAD
+    // MÉTODO 4: ACTUALIZAR (PUT /ID) - MODIFICADO para Localidad
     // =======================================================
 
     @Transactional
     public AgrupacionResponse actualizarAgrupacion(Long id, AgrupacionRequest request) {
-        // 1. Verificar si la entidad existe (y lanzar 404 si no)
+        // 1. Verificar si la entidad existe
         Agrupacion agrupacionExistente = agrupacionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agrupacion", "id", id));
 
-        // 2. Actualizar campos
+        // 2. Buscar la Localidad (si no existe, lanza 404)
+        Localidad nuevaLocalidad = localidadRepository.findById(request.getLocalidadId())
+                .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", request.getLocalidadId()));
+
+        // 3. Actualizar campos
         agrupacionExistente.setNombre(request.getNombre());
         agrupacionExistente.setDescripcion(request.getDescripcion());
-        agrupacionExistente.setModalidad(request.getModalidad()); // << AÑADIDO: CORRECCIÓN DE LÓGICA
+        agrupacionExistente.setModalidad(request.getModalidad());
+        agrupacionExistente.setLocalidad(nuevaLocalidad); // << ACTUALIZAR LOCALIDAD
 
-        // 3. Guardar y retornar
+        // 4. Guardar y retornar
         Agrupacion agrupacionActualizada = agrupacionRepository.save(agrupacionExistente);
 
         return agrupacionMapper.toResponse(agrupacionActualizada);
