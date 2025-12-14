@@ -1,127 +1,102 @@
 package org.carnavawiky.back.exception;
 
-import org.carnavawiky.back.dto.error.ErrorResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.carnavawiky.back.dto.ErrorDetails;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    // =======================================================
+    // 1. MANEJO DE RECURSO NO ENCONTRADO (404 Not Found)
+    // =======================================================
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleResourceNotFoundException(
+            ResourceNotFoundException exception,
+            WebRequest webRequest) {
 
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                exception.getMessage(),
+                webRequest.getDescription(false),
+                HttpStatus.NOT_FOUND.value()
+        );
 
-    // Método para manejar errores de validación de DTOs (@Valid)
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
+
+    // =======================================================
+    // 2. MANEJO DE PETICIONES MAL FORMADAS (400 Bad Request)
+    // Se utiliza para errores de validación de Jakarta/Hibernate Validator (@Valid en DTOs)
+    // =======================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions( // <--- CORRECCIÓN 1: ResponseEntity usa ErrorResponse
-                                                                     MethodArgumentNotValidException ex, WebRequest request) {
+    public ResponseEntity<ErrorDetails> handleValidationExceptions(
+            MethodArgumentNotValidException exception,
+            WebRequest webRequest) {
 
-        // Extraemos todos los errores de campo y los concatenamos
-        String errors = ex.getBindingResult().getFieldErrors().stream()
+        // Recopila los mensajes de error de todos los campos que fallaron
+        String detailedMessage = exception.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
 
-        // Si no hay errores de campo específicos, usamos un mensaje genérico
-        if (errors.isEmpty()) {
-            errors = "Error de validación de datos de entrada.";
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                "Error de validación de entrada: " + detailedMessage,
+                webRequest.getDescription(false),
+                HttpStatus.BAD_REQUEST.value()
+        );
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    // =======================================================
+    // 3. MANEJO DE CONFLICTO DE DATOS (409 Conflict)
+    // Se utiliza principalmente para violaciones de unicidad (UNIQUE constraints) o NOT NULL
+    // =======================================================
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorDetails> handleDataIntegrityViolationException(
+            DataIntegrityViolationException exception,
+            WebRequest webRequest) {
+
+        // Intenta extraer un mensaje más amigable
+        String rootMessage = "Violación de la integridad de datos. Posiblemente clave duplicada o campo nulo obligatorio.";
+        if (exception.getRootCause() != null) {
+            rootMessage = exception.getRootCause().getMessage();
         }
 
-        // Creamos la respuesta de error estructurada
-        ErrorResponse errorResponse = new ErrorResponse( // <--- CORRECCIÓN 2: Se crea un objeto ErrorResponse
-                errors,
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                Instant.now()
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                rootMessage,
+                webRequest.getDescription(false),
+                HttpStatus.CONFLICT.value()
         );
 
-        // Registramos el error en el log (opcional, pero recomendado)
-        // logger.error("Error de Validación: " + errors);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST); // <--- CORRECCIÓN 3: Devuelve ErrorResponse
+        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
     }
 
-
-    /**
-     * Maneja las excepciones BadRequestException (HTTP 400)
-     * Utilizada para errores de negocio (ej: nombre de usuario ya existe)
-     */
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex, WebRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        logger.warn("Solicitud inválida: {}", ex.getMessage());
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                ex.getMessage(),
-                status.value(),
-                status.getReasonPhrase(),
-                Instant.now()
-        );
-        return new ResponseEntity<>(errorResponse, status);
-    }
-
-    /**
-     * Maneja las excepciones ResourceNotFoundException (HTTP 404)
-     */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-        HttpStatus status = HttpStatus.NOT_FOUND;
-        logger.warn("Recurso no encontrado: {}", ex.getMessage());
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                ex.getMessage(),
-                status.value(),
-                status.getReasonPhrase(),
-                Instant.now()
-        );
-        return new ResponseEntity<>(errorResponse, status);
-    }
-
-
-
-    /**
-     * Maneja las excepciones relacionadas con el Refresh Token (HTTP 403 Forbidden)
-     */
-    @ExceptionHandler(TokenRefreshException.class)
-    public ResponseEntity<ErrorResponse> handleTokenRefreshException(TokenRefreshException ex, WebRequest request) {
-        HttpStatus status = HttpStatus.FORBIDDEN;
-        logger.warn("Excepción de Refresh Token: {}", ex.getMessage());
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                ex.getMessage(),
-                status.value(),
-                status.getReasonPhrase(),
-                Instant.now()
-        );
-        // Devolvemos el estado 403 FORBIDDEN
-        return new ResponseEntity<>(errorResponse, status);
-    }
-
-
-    /**
-     * Maneja excepciones genéricas no previstas (HTTP 500)
-     */
+    // =======================================================
+    // 4. MANEJO DE EXCEPCIÓN GENÉRICA (500 Internal Server Error)
+    // =======================================================
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        // Registro del error en nivel ERROR (CRÍTICO)
-        logger.error("Error Interno del Servidor: {}", ex.getMessage(), ex);
+    public ResponseEntity<ErrorDetails> handleGlobalException(
+            Exception exception,
+            WebRequest webRequest) {
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
                 "Ha ocurrido un error inesperado en el servidor.",
-                status.value(),
-                status.getReasonPhrase(),
-                Instant.now()
+                webRequest.getDescription(false),
+                HttpStatus.INTERNAL_SERVER_ERROR.value()
         );
-        return new ResponseEntity<>(errorResponse, status);
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
