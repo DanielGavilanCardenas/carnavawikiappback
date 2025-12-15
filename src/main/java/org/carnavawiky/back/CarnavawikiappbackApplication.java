@@ -4,19 +4,21 @@ import org.carnavawiky.back.service.EmailService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching; // IMPORTACIÓN AÑADIDA
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
+@EnableCaching // ANOTACIÓN AÑADIDA para habilitar el soporte de Caching
 public class CarnavawikiappbackApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(CarnavawikiappbackApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(CarnavawikiappbackApplication.class, args);
+    }
 
-	@Bean
-	public CommandLineRunner testRunner(EmailService emailService) {
-		return args -> {
+    @Bean
+    public CommandLineRunner testRunner(EmailService emailService) {
+        return args -> {
 //			// --- PRUEBA DE ENVÍO DE EMAIL ---
 //			System.out.println("Intentando enviar email de prueba...");
 //			try {
@@ -25,7 +27,7 @@ public class CarnavawikiappbackApplication {
 //			} catch (Exception e) {
 //				System.err.println("ERROR AL ENVIAR EMAIL: " + e.getMessage());
 //			}
-		};
-	}
+        };
+    }
 
 }

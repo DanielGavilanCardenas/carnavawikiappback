@@ -8,6 +8,8 @@ import org.carnavawiky.back.mapper.LocalidadMapper;
 import org.carnavawiky.back.model.Localidad;
 import org.carnavawiky.back.repository.LocalidadRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict; // NUEVO IMPORT
+import org.springframework.cache.annotation.Cacheable; // NUEVO IMPORT
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,8 +27,10 @@ public class LocalidadService {
 
     // =======================================================
     // 1. CREAR (POST)
+    // Cuando creamos, invalidamos la lista y la caché por ID, ya que hay un nuevo recurso.
     // =======================================================
     @Transactional
+    @CacheEvict(value = {"localidades_list", "localidad_by_id"}, allEntries = true)
     public LocalidadResponse crearLocalidad(LocalidadRequest request) {
         Localidad localidad = localidadMapper.toEntity(request);
         Localidad nuevaLocalidad = localidadRepository.save(localidad);
@@ -35,8 +39,10 @@ public class LocalidadService {
 
     // =======================================================
     // 2. OBTENER POR ID (GET /ID)
+    // El resultado se almacena en el caché "localidad_by_id", usando el ID como clave.
     // =======================================================
     @Transactional(readOnly = true)
+    @Cacheable(value = "localidad_by_id", key = "#id")
     public LocalidadResponse obtenerLocalidadPorId(Long id) {
         Localidad localidad = localidadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", id));
@@ -45,8 +51,11 @@ public class LocalidadService {
 
     // =======================================================
     // 3. OBTENER TODAS (GET) - CON PAGINACIÓN Y BÚSQUEDA
+    // El resultado se almacena en el caché "localidades_list".
+    // La clave debe incluir todos los parámetros (página, tamaño, búsqueda) para diferenciar cachés.
     // =======================================================
     @Transactional(readOnly = true)
+    @Cacheable(value = "localidades_list", key = "#pageable.pageNumber + '_' + #pageable.pageSize + '_' + #search")
     public PageResponse<LocalidadResponse> obtenerTodasLocalidades(Pageable pageable, String search) {
 
         Page<Localidad> localidadPage;
@@ -66,8 +75,10 @@ public class LocalidadService {
 
     // =======================================================
     // 4. ACTUALIZAR (PUT /ID)
+    // Al actualizar, invalidamos la lista y el objeto individual.
     // =======================================================
     @Transactional
+    @CacheEvict(value = {"localidades_list", "localidad_by_id"}, allEntries = true)
     public LocalidadResponse actualizarLocalidad(Long id, LocalidadRequest request) {
         Localidad localidadExistente = localidadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", id));
@@ -81,11 +92,10 @@ public class LocalidadService {
 
     // =======================================================
     // 5. ELIMINAR (DELETE /ID)
-    // NOTA: Si esta localidad está referenciada por una Agrupacion,
-    // Hibernate lanzará una excepción de restricción de clave foránea.
-    // Esto es deseado para mantener la integridad referencial.
+    // Al eliminar, invalidamos la lista y el objeto individual.
     // =======================================================
     @Transactional
+    @CacheEvict(value = {"localidades_list", "localidad_by_id"}, allEntries = true)
     public void eliminarLocalidad(Long id) {
         Localidad localidad = localidadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", id));
