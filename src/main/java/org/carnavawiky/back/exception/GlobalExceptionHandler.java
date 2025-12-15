@@ -34,7 +34,25 @@ public class GlobalExceptionHandler {
     }
 
     // =======================================================
-    // 2. MANEJO DE PETICIONES MAL FORMADAS (400 Bad Request)
+    // 2. MANEJO DE ARCHIVO NO ENCONTRADO (404 Not Found) - NUEVO
+    // =======================================================
+    @ExceptionHandler(FileNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleFileNotFoundException(
+            FileNotFoundException exception,
+            WebRequest webRequest) {
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                exception.getMessage(),
+                webRequest.getDescription(false),
+                HttpStatus.NOT_FOUND.value()
+        );
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
+
+    // =======================================================
+    // 3. MANEJO DE PETICIONES MAL FORMADAS (400 Bad Request)
     // Se utiliza para errores de validación de Jakarta/Hibernate Validator (@Valid en DTOs)
     // =======================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -58,7 +76,7 @@ public class GlobalExceptionHandler {
     }
 
     // =======================================================
-    // 3. MANEJO DE CONFLICTO DE DATOS (409 Conflict)
+    // 4. MANEJO DE CONFLICTO DE DATOS (409 Conflict)
     // Se utiliza principalmente para violaciones de unicidad (UNIQUE constraints) o NOT NULL
     // =======================================================
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -66,7 +84,6 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException exception,
             WebRequest webRequest) {
 
-        // Intenta extraer un mensaje más amigable
         String rootMessage = "Violación de la integridad de datos. Posiblemente clave duplicada o campo nulo obligatorio.";
         if (exception.getRootCause() != null) {
             rootMessage = exception.getRootCause().getMessage();
@@ -83,7 +100,26 @@ public class GlobalExceptionHandler {
     }
 
     // =======================================================
-    // 4. MANEJO DE EXCEPCIÓN GENÉRICA (500 Internal Server Error)
+    // 5. MANEJO DE FALLO DE ALMACENAMIENTO (500 Internal Server Error) - NUEVO
+    // Se utiliza para errores de permisos, I/O al guardar, o fallo de disco.
+    // =======================================================
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorDetails> handleFileStorageException(
+            FileStorageException exception,
+            WebRequest webRequest) {
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                "Error de almacenamiento en el servidor: " + exception.getMessage(),
+                webRequest.getDescription(false),
+                HttpStatus.INTERNAL_SERVER_ERROR.value()
+        );
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // =======================================================
+    // 6. MANEJO DE EXCEPCIÓN GENÉRICA (500 Internal Server Error)
     // =======================================================
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDetails> handleGlobalException(
