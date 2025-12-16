@@ -4,11 +4,14 @@ public enum RolComponente {
     DIRECTOR,
     AUTOR_MUSICA,
     AUTOR_LETRA,
-    CAJILLA,
+    CAJA,
     BOMBO,
     GUITARRA,
     TENOR,
     SEGUNDA,
     OCTAVILLA,
-    BAJO
+    BAJO,
+    CONTRAALTO,
+    LAUD,
+    BANDURRIA
 }

@@ -23,6 +23,7 @@ public class AgrupacionMapper {
         agrupacion.setDescripcion(request.getDescripcion());
         agrupacion.setUsuarioCreador(usuarioCreador); // Vinculamos el creador
         agrupacion.setModalidad(request.getModalidad());
+        agrupacion.setAnho(request.getAnho());
 
         // =======================================================
         // AÑADIDO: VINCULACIÓN DE LOCALIDAD
@@ -44,6 +45,7 @@ public class AgrupacionMapper {
         response.setDescripcion(entity.getDescripcion());
         response.setFechaAlta(entity.getFechaAlta());
         response.setModalidad(entity.getModalidad());
+        response.setAnho(entity.getAnho());
 
         // Mapeamos el nombre del usuario creador para la respuesta
         response.setNombreUsuarioCreador(entity.getUsuarioCreador().getUsername());

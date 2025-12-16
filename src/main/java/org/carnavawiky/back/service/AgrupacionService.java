@@ -119,6 +119,7 @@ public class AgrupacionService {
         agrupacionExistente.setDescripcion(request.getDescripcion());
         agrupacionExistente.setModalidad(request.getModalidad());
         agrupacionExistente.setLocalidad(nuevaLocalidad); // << ACTUALIZAR LOCALIDAD
+        agrupacionExistente.setAnho(request.getAnho());
 
         // 4. Guardar y retornar
         Agrupacion agrupacionActualizada = agrupacionRepository.save(agrupacionExistente);

@@ -12,6 +12,7 @@ public class AgrupacionResponse {
     private String descripcion;
     private LocalDateTime fechaAlta;
     private String nombreUsuarioCreador; // Mostramos solo el nombre del creador
+    private Integer anho;
 
     // =======================================================
     // EXISTENTE: Modalidad

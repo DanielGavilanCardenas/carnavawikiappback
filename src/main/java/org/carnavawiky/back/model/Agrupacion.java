@@ -20,6 +20,9 @@ public class Agrupacion {
     @Column(nullable = false, unique = true)
     private String nombre; // Nombre único de la agrupación
 
+    @Column(nullable = false)
+    private Integer anho;
+
     @Column(length = 1000)
     private String descripcion;
 
