@@ -10,8 +10,12 @@ public class LocalidadMapper {
 
     /**
      * Convierte un LocalidadRequest a una entidad Localidad.
+     * Retorna null si el request es null.
      */
     public Localidad toEntity(LocalidadRequest request) {
+        if (request == null) { // <-- Corrección de Null Check
+            return null;
+        }
         Localidad localidad = new Localidad();
         localidad.setNombre(request.getNombre());
         return localidad;
@@ -19,8 +23,12 @@ public class LocalidadMapper {
 
     /**
      * Convierte una entidad Localidad a un LocalidadResponse.
+     * Retorna null si la entidad es null.
      */
     public LocalidadResponse toResponse(Localidad entity) {
+        if (entity == null) { // <-- Corrección de Null Check
+            return null;
+        }
         LocalidadResponse response = new LocalidadResponse();
         response.setId(entity.getId());
         response.setNombre(entity.getNombre());

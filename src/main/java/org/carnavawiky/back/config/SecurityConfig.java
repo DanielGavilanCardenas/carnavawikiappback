@@ -4,6 +4,7 @@ import org.carnavawiky.back.security.JwtTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // <--- CORRECCIÓN 1: Nueva importación necesaria
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -61,18 +62,26 @@ public class SecurityConfig {
                         // 2. Endpoints de autenticación (Registro, Login) (PÚBLICOS)
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 3. Endpoints protegidos por Roles (Protección a nivel de Endpoint)
+                        // 3. PROTECCIÓN DE LOCALIDADES (POST/PUT/DELETE)
+                        // POST (Crear): Solo ADMIN
+                        .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole("ADMIN") // <--- CORRECCIÓN 2
+                        // PUT (Actualizar): Solo ADMIN
+                        .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole("ADMIN") // <--- CORRECCIÓN 3
+                        // DELETE (Eliminar): Solo ADMIN
+                        .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole("ADMIN") // <--- CORRECCIÓN 4
+
+                        // 4. Endpoints protegidos por Roles generales
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/especialisto/**").hasAnyRole("ADMIN", "ESPECIALISTO")
 
-                        // 4. Resto de endpoints, requiere autenticación (JWT Válido)
+                        // 5. Resto de endpoints (incluyendo GET), requiere autenticación (JWT Válido)
                         .anyRequest().authenticated()
                 )
 
-                // 4. Configuración de Sesión (Sin estado/Stateless, crucial para JWT)
+                // 6. Configuración de Sesión (Sin estado/Stateless, crucial para JWT)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 5. AÑADIR NUESTRO FILTRO PERSONALIZADO JWT
+                // 7. AÑADIR NUESTRO FILTRO PERSONALIZADO JWT
                 // Se ejecuta ANTES del filtro de autenticación por usuario/contraseña de Spring
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -80,7 +89,7 @@ public class SecurityConfig {
     }
     //
 
-    // 6. Configuración CORS (Necesario para la comunicación con Angular)
+    // 8. Configuración CORS (Necesario para la comunicación con Angular)
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
