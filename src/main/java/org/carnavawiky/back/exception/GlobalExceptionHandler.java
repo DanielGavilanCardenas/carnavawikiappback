@@ -55,19 +55,22 @@ public class GlobalExceptionHandler {
     // 3. MANEJO DE PETICIONES MAL FORMADAS (400 Bad Request)
     // Se utiliza para errores de validación de Jakarta/Hibernate Validator (@Valid en DTOs)
     // =======================================================
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorDetails> handleValidationExceptions(
-            MethodArgumentNotValidException exception,
-            WebRequest webRequest) {
 
-        // Recopila los mensajes de error de todos los campos que fallaron
-        String detailedMessage = exception.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining("; "));
+    // Cambia esto en GlobalExceptionHandler.java
+    @ExceptionHandler(MethodArgumentNotValidException.class) // Añade esta anotación
+    public ResponseEntity<ErrorDetails> handleMethodArgumentNotValidException( // Cambia el nombre y tipo
+                                                                               MethodArgumentNotValidException exception,
+                                                                               WebRequest webRequest) {
+
+        String errors = exception.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(x -> x.getField() + ": " + x.getDefaultMessage())
+                .collect(Collectors.joining(", "));
 
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
-                "Error de validación de entrada: " + detailedMessage,
+                "Errores de validación: " + errors,
                 webRequest.getDescription(false),
                 HttpStatus.BAD_REQUEST.value()
         );
@@ -135,4 +138,5 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 }

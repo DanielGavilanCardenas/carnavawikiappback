@@ -5,7 +5,7 @@ import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-// Importamos Value para obtener la URL base (opcional, pero buena práctica)
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
