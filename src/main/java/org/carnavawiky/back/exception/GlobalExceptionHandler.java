@@ -139,4 +139,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
+    public ResponseEntity<Object> handleAccessDeniedException(Exception ex) {
+        return new ResponseEntity<>("Acceso denegado: no tienes permisos suficientes", org.springframework.http.HttpStatus.FORBIDDEN);
+    }
+
 }
