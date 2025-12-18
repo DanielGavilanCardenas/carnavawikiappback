@@ -47,25 +47,29 @@ public class FileStorageService {
      * @return El nombre único del fichero guardado.
      */
     public String storeFile(MultipartFile file) {
-        String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        String extension = "";
-        int lastDot = originalFilename.lastIndexOf('.');
-        if (lastDot > 0) {
-            extension = originalFilename.substring(lastDot);
-        }
-
-        String fileName = UUID.randomUUID().toString() + extension;
-        Path targetLocation = this.fileStorageLocation.resolve(fileName);
+        // 1. Limpiar y normalizar el nombre del archivo
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
         try {
-            // Copiar el archivo al directorio de destino
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException ex) {
-            // Se lanza la nueva excepción personalizada
-            throw new FileStorageException("No se pudo guardar el archivo " + fileName + ". Intente de nuevo.", ex);
-        }
+            // 2. VALIDACIÓN DE SEGURIDAD (Esto es lo que hace que falle el segundo test si falta)
+            if (fileName.contains("..")) {
+                throw new FileStorageException("El nombre del archivo contiene una ruta relativa inválida: " + fileName);
+            }
 
-        return fileName;
+            // 3. Generar nombre único (Para evitar colisiones)
+            String extension = "";
+            int i = fileName.lastIndexOf('.');
+            if (i > 0) { extension = fileName.substring(i); }
+            String storedName = UUID.randomUUID().toString() + extension;
+
+            // 4. Resolver ruta y copiar
+            Path targetLocation = this.fileStorageLocation.resolve(storedName);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            return storedName;
+        } catch (IOException ex) {
+            throw new FileStorageException("No se pudo almacenar el archivo " + fileName, ex);
+        }
     }
 
     /**
