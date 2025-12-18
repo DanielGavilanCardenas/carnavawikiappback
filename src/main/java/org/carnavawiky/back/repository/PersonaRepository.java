@@ -11,6 +11,8 @@ import java.util.Optional;
 @Repository
 public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
+    Optional<Persona> findByNombreReal(String nombreReal);
+
     // Búsqueda para paginación por nombre real o apodo
     Page<Persona> findByNombreRealContainingIgnoreCaseOrApodoContainingIgnoreCase(
             String nombreReal, String apodo, Pageable pageable);
