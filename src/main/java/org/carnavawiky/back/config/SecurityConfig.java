@@ -4,7 +4,7 @@ import org.carnavawiky.back.security.JwtTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // <--- CORRECCIÓN 1: Nueva importación necesaria
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -64,11 +64,11 @@ public class SecurityConfig {
 
                         // 3. PROTECCIÓN DE LOCALIDADES (POST/PUT/DELETE)
                         // POST (Crear): Solo ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole("ADMIN") // <--- CORRECCIÓN 2
+                        .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole("ADMIN")
                         // PUT (Actualizar): Solo ADMIN
-                        .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole("ADMIN") // <--- CORRECCIÓN 3
+                        .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole("ADMIN")
                         // DELETE (Eliminar): Solo ADMIN
-                        .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole("ADMIN") // <--- CORRECCIÓN 4
+                        .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole("ADMIN")
 
                         // 4. Endpoints protegidos por Roles generales
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

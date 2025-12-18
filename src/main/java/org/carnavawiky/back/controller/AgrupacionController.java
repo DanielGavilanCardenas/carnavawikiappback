@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/agrupaciones")
@@ -40,7 +39,7 @@ public class AgrupacionController {
     // =======================================================
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<PageResponse<AgrupacionResponse>> obtenerTodasAgrupaciones( // << TIPO DE RETORNO MODIFICADO
+    public ResponseEntity<PageResponse<AgrupacionResponse>> obtenerTodasAgrupaciones(
                                                                                       Pageable pageable, // Spring inyecta Pageable
                                                                                       @RequestParam(required = false) String search) { // Parámetro de búsqueda
 

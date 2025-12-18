@@ -21,7 +21,6 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // La ruta "/api/imagenes/ficheros/**" es la URL que usamos en el Controller y Service.
         // Mapea esa URL al directorio físico 'file.upload.location'.
         String locationUri = Paths.get(fileStorageProperties.getLocation()).toUri().toString();
 
