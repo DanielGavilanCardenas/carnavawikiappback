@@ -3,7 +3,6 @@ package org.carnavawiky.back.service;
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
 import org.carnavawiky.back.dto.PageResponse;
-import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.AgrupacionMapper;
 import org.carnavawiky.back.model.Agrupacion;
 import org.carnavawiky.back.model.Localidad;

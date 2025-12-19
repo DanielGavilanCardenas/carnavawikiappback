@@ -66,7 +66,7 @@ public class ImagenService {
         String fileName = fileStorageService.storeFile(file);
 
         // 3. Lógica de Portada: Si se marca como portada, desmarcar la anterior
-        if (request.getEsPortada()) {
+        if (Boolean.TRUE.equals( request.getEsPortada())) {
             imagenRepository.desmarcarPortadaActual(agrupacion.getId());
         }
 

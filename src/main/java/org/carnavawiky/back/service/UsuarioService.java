@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,10 +44,10 @@ public class UsuarioService {
     @Transactional
     public UsuarioResponse crearUsuario(UsuarioRequest request) {
         // Validación de unicidad de username y email
-        if (usuarioRepository.existsByUsername(request.getUsername())) {
+        if (Boolean.TRUE.equals(usuarioRepository.existsByUsername(request.getUsername()))) {
             throw new BadRequestException("El nombre de usuario ya está en uso.");
         }
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
+        if (Boolean.TRUE.equals(usuarioRepository.existsByEmail(request.getEmail()))) {
             throw new BadRequestException("El email ya está en uso.");
         }
 
@@ -119,7 +118,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "id", id));
 
         // 1. Validar unicidad de email (solo si cambia)
-        if (!usuarioExistente.getEmail().equals(request.getEmail()) && usuarioRepository.existsByEmail(request.getEmail())) {
+        if (!usuarioExistente.getEmail().equals(request.getEmail()) && Boolean.TRUE.equals( usuarioRepository.existsByEmail(request.getEmail()))) {
             throw new BadRequestException("El email ya está en uso por otro usuario.");
         }
 

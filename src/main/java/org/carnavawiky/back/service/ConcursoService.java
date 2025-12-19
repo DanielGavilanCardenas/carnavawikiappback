@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 @Service
 public class ConcursoService {
 
+    public static final String CONCURSO = "Concurso";
     @Autowired
     private ConcursoRepository concursoRepository;
 
@@ -51,7 +52,7 @@ public class ConcursoService {
     @Transactional(readOnly = true)
     public ConcursoResponse obtenerConcursoPorId(Long id) {
         Concurso concurso = concursoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Concurso", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(CONCURSO, "id", id));
         return concursoMapper.toResponse(concurso);
     }
 
@@ -82,7 +83,7 @@ public class ConcursoService {
     @Transactional
     public ConcursoResponse actualizarConcurso(Long id, ConcursoRequest request) {
         Concurso concursoExistente = concursoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Concurso", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(CONCURSO, "id", id));
 
         // 1. Buscar Localidad (N:1)
         Localidad nuevaLocalidad = localidadRepository.findById(request.getLocalidadId())
@@ -105,7 +106,7 @@ public class ConcursoService {
     @Transactional
     public void eliminarConcurso(Long id) {
         Concurso concurso = concursoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Concurso", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(CONCURSO, "id", id));
 
         // NOTA: La eliminación fallará si existen Ediciones vinculadas (Integridad Referencial)
         concursoRepository.delete(concurso);

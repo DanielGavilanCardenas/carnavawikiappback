@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 @Service
 public class ComponenteService {
 
+    public static final String COMPONENTE = "Componente";
     @Autowired
     private ComponenteRepository componenteRepository;
 
@@ -70,7 +71,7 @@ public class ComponenteService {
     @Transactional(readOnly = true)
     public ComponenteResponse obtenerComponentePorId(Long id) {
         Componente componente = componenteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Componente", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPONENTE, "id", id));
         return componenteMapper.toResponse(componente);
     }
 
@@ -101,7 +102,7 @@ public class ComponenteService {
     @Transactional
     public ComponenteResponse actualizarComponente(Long id, ComponenteRequest request) {
         Componente componenteExistente = componenteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Componente", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPONENTE, "id", id));
 
         // 1. Buscar entidades relacionadas (se necesita de nuevo si el ID cambió)
         Persona nuevaPersona = findPersona(request.getPersonaId());
@@ -124,7 +125,7 @@ public class ComponenteService {
     @Transactional
     public void eliminarComponente(Long id) {
         Componente componente = componenteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Componente", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPONENTE, "id", id));
 
         componenteRepository.delete(componente);
     }

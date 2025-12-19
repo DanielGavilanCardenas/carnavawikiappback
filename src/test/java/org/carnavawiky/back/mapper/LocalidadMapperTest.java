@@ -12,13 +12,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * Pruebas Unitarias para LocalidadMapper.
  * No se requieren mocks ya que el Mapper es un POJO de conversión simple (función pura).
  */
-public class LocalidadMapperTest {
+class LocalidadMapperTest {
 
     // Instancia real de la clase a probar
     private LocalidadMapper localidadMapper;
 
     // Datos de Prueba (fixtures)
-    private final Long LOCALIDAD_ID = 10L;
+    private final Long LOCALIDADID = 10L;
     private final String NOMBRE = "Chipiona";
 
     @BeforeEach
@@ -64,7 +64,7 @@ public class LocalidadMapperTest {
     void testToResponse_DebeConvertirEntityAResponse() {
         // ARRANGE
         Localidad entity = new Localidad();
-        entity.setId(LOCALIDAD_ID);
+        entity.setId(LOCALIDADID);
         entity.setNombre(NOMBRE);
 
         // ACT
@@ -72,7 +72,7 @@ public class LocalidadMapperTest {
 
         // ASSERT
         assertNotNull(response, "La respuesta resultante no debe ser nula.");
-        assertEquals(LOCALIDAD_ID, response.getId(), "El ID debe transferirse correctamente.");
+        assertEquals(LOCALIDADID, response.getId(), "El ID debe transferirse correctamente.");
         assertEquals(NOMBRE, response.getNombre(), "El nombre debe transferirse correctamente.");
     }
 

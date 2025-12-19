@@ -24,6 +24,7 @@ import java.util.Optional;
 @Service
 public class PersonaService {
 
+    public static final String PERSONA = "Persona";
     @Autowired
     private PersonaRepository personaRepository;
 
@@ -93,7 +94,7 @@ public class PersonaService {
     @Transactional(readOnly = true)
     public PersonaResponse obtenerPersonaPorId(Long id) {
         Persona persona = personaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Persona", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(PERSONA, "id", id));
         return personaMapper.toResponse(persona);
     }
 
@@ -126,7 +127,7 @@ public class PersonaService {
     @Transactional
     public PersonaResponse actualizarPersona(Long id, PersonaRequest request) {
         Persona personaExistente = personaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Persona", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(PERSONA, "id", id));
 
         // 1. Buscar y validar nuevas relaciones
         Localidad nuevoOrigen = findLocalidad(request.getLocalidadId());
@@ -153,7 +154,7 @@ public class PersonaService {
     @Transactional
     public void eliminarPersona(Long id) {
         Persona persona = personaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Persona", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(PERSONA, "id", id));
 
         // NOTA: La eliminación fallará si existen Componentes o Autores vinculados
         personaRepository.delete(persona);

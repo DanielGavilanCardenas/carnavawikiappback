@@ -33,7 +33,7 @@ class ActivationServiceTest {
     private ActivationService activationService;
 
     private Usuario usuario;
-    private final String TOKEN_PRUEBA = "token-uuid-123";
+    private static final String TOKENPRUEBA = "token-uuid-123";
 
     @BeforeEach
     void setUp() {
@@ -45,7 +45,7 @@ class ActivationServiceTest {
         usuario.setUsername("carnavalero");
         usuario.setEmail("test@carnavawiky.org");
         usuario.setEnabled(false);
-        usuario.setActivationToken(TOKEN_PRUEBA);
+        usuario.setActivationToken(TOKENPRUEBA);
     }
 
     // =======================================================
@@ -76,10 +76,10 @@ class ActivationServiceTest {
     @DisplayName("Debe activar al usuario y limpiar el token si el token es válido")
     void testActivateUser_Success() {
         // ARRANGE
-        when(usuarioRepository.findByActivationToken(TOKEN_PRUEBA)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByActivationToken(TOKENPRUEBA)).thenReturn(Optional.of(usuario));
 
         // ACT
-        activationService.activateUser(TOKEN_PRUEBA);
+        activationService.activateUser(TOKENPRUEBA);
 
         // ASSERT
         assertTrue(usuario.isEnabled(), "El usuario debería estar habilitado.");
@@ -106,11 +106,11 @@ class ActivationServiceTest {
     void testActivateUser_AlreadyEnabled() {
         // ARRANGE
         usuario.setEnabled(true); // Usuario ya activo
-        when(usuarioRepository.findByActivationToken(TOKEN_PRUEBA)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByActivationToken(TOKENPRUEBA)).thenReturn(Optional.of(usuario));
 
         // ACT & ASSERT
         assertThrows(BadRequestException.class, () -> {
-            activationService.activateUser(TOKEN_PRUEBA);
+            activationService.activateUser(TOKENPRUEBA);
         });
 
         verify(usuarioRepository, never()).save(any());

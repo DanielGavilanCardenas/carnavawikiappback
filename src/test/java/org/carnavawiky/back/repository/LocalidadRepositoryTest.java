@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Pruebas de integración para LocalidadRepository.
  */
 @DataJpaTest
-public class LocalidadRepositoryTest {
+class LocalidadRepositoryTest {
 
     @Autowired
     private LocalidadRepository localidadRepository;
@@ -46,7 +46,7 @@ public class LocalidadRepositoryTest {
     }
 
     // =======================================================
-    // 2. PRUEBA DE BÚSQUEDA DE TODOS
+    // 2. PRUEBA DE BÚSQUEDA DE ALL
     // =======================================================
     @Test
     void testFindAll() {

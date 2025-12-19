@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 @Service
 public class PremioService {
 
+    public static final String PREMIO = "Premio";
     @Autowired
     private PremioRepository premioRepository;
 
@@ -70,7 +71,7 @@ public class PremioService {
     @Transactional(readOnly = true)
     public PremioResponse obtenerPremioPorId(Long id) {
         Premio premio = premioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Premio", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(PREMIO, "id", id));
         return premioMapper.toResponse(premio);
     }
 
@@ -108,7 +109,7 @@ public class PremioService {
     @Transactional
     public PremioResponse actualizarPremio(Long id, PremioRequest request) {
         Premio premioExistente = premioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Premio", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(PREMIO, "id", id));
 
         // 1. Buscar entidades relacionadas (se necesita de nuevo si el ID cambió)
         Agrupacion nuevaAgrupacion = obtenerAgrupacion(request.getAgrupacionId());
@@ -132,7 +133,7 @@ public class PremioService {
     @Transactional
     public void eliminarPremio(Long id) {
         Premio premio = premioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Premio", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(PREMIO, "id", id));
 
         premioRepository.delete(premio);
     }

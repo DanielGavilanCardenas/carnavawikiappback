@@ -9,7 +9,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -18,16 +17,17 @@ class JwtServiceTest {
 
     private JwtService jwtService;
 
-    // Clave de prueba (debe tener al menos 32 caracteres para HS256)
-    private final String SECRET_KEY = "mi_clave_secreta_super_segura_para_el_test_de_carnaval";
-    private final Long EXPIRATION_MINUTES = 15L;
+
 
     @BeforeEach
     void setUp() {
+        // Clave de prueba (debe tener al menos 32 caracteres para HS256)
+        String secretKey = "mi_clave_secreta_super_segura_para_el_test_de_carnaval";
+        Long expirationMinutes = 15L;
         jwtService = new JwtService();
         // Inyectamos manualmente los valores de @Value usando ReflectionTestUtils
-        ReflectionTestUtils.setField(jwtService, "jwtSecretKey", SECRET_KEY);
-        ReflectionTestUtils.setField(jwtService, "jwtExpirationMinutes", EXPIRATION_MINUTES);
+        ReflectionTestUtils.setField(jwtService, "jwtSecretKey", secretKey);
+        ReflectionTestUtils.setField(jwtService, "jwtExpirationMinutes", expirationMinutes);
     }
 
     @Test
@@ -45,7 +45,7 @@ class JwtServiceTest {
 
         // ASSERT
         assertNotNull(token);
-        assertTrue(token.length() > 0);
+        assertFalse(token.isEmpty());
         assertTrue(jwtService.validateToken(token));
         assertEquals("usuarioTest", jwtService.getUsernameFromToken(token));
     }

@@ -63,10 +63,10 @@ public class AuthService {
 
     @Transactional
     public Usuario register(RegisterRequest request) {
-        if (usuarioRepository.existsByUsername(request.getUsername())) {
+        if (Boolean.TRUE.equals(usuarioRepository.existsByUsername(request.getUsername()))) {
             throw new IllegalArgumentException("El nombre de usuario ya está en uso.");
         }
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
+        if (Boolean.TRUE.equals(usuarioRepository.existsByEmail(request.getEmail()))) {
             throw new IllegalArgumentException("El email ya está registrado.");
         }
 

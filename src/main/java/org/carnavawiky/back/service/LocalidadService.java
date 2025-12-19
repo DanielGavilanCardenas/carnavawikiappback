@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 @Service
 public class LocalidadService {
 
+    public static final String LOCALIDAD = "Localidad";
     @Autowired
     private LocalidadRepository localidadRepository;
 
@@ -45,7 +46,7 @@ public class LocalidadService {
     @Cacheable(value = "localidad_by_id", key = "#id")
     public LocalidadResponse obtenerLocalidadPorId(Long id) {
         Localidad localidad = localidadRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(LOCALIDAD, "id", id));
         return localidadMapper.toResponse(localidad);
     }
 
@@ -81,7 +82,7 @@ public class LocalidadService {
     @CacheEvict(value = {"localidades_list", "localidad_by_id"}, allEntries = true)
     public LocalidadResponse actualizarLocalidad(Long id, LocalidadRequest request) {
         Localidad localidadExistente = localidadRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(LOCALIDAD, "id", id));
 
         localidadExistente.setNombre(request.getNombre());
 
@@ -98,7 +99,7 @@ public class LocalidadService {
     @CacheEvict(value = {"localidades_list", "localidad_by_id"}, allEntries = true)
     public void eliminarLocalidad(Long id) {
         Localidad localidad = localidadRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Localidad", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(LOCALIDAD, "id", id));
 
         localidadRepository.delete(localidad);
     }

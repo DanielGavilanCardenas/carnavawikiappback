@@ -49,7 +49,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
                 "app.security.seed-enabled=false" // Desactiva el Data Seeder
         }
 )
-public class LocalidadControllerTest {
+class LocalidadControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -93,8 +93,8 @@ public class LocalidadControllerTest {
     // =======================================================
     private LocalidadRequest validRequest;
     private LocalidadResponse validResponse;
-    private final Long LOCALIDAD_ID = 1L;
-    private final String API_BASE = "/api/localidades";
+    private final Long LOCALIDADID = 1L;
+    private final String APIBASE = "/api/localidades";
 
     @BeforeEach
     void setUp() {
@@ -102,7 +102,7 @@ public class LocalidadControllerTest {
         validRequest.setNombre("Cádiz");
 
         validResponse = new LocalidadResponse();
-        validResponse.setId(LOCALIDAD_ID);
+        validResponse.setId(LOCALIDADID);
         validResponse.setNombre("Cádiz");
     }
 
@@ -117,12 +117,12 @@ public class LocalidadControllerTest {
         when(localidadService.crearLocalidad(any(LocalidadRequest.class))).thenReturn(validResponse);
 
         // ACT & ASSERT
-        mockMvc.perform(post(API_BASE)
+        mockMvc.perform(post(APIBASE)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id", is(LOCALIDAD_ID.intValue())))
+                .andExpect(jsonPath("$.id", is(LOCALIDADID.intValue())))
                 .andExpect(jsonPath("$.nombre", is("Cádiz")));
 
         verify(localidadService, times(1)).crearLocalidad(any(LocalidadRequest.class));
@@ -132,7 +132,7 @@ public class LocalidadControllerTest {
     @WithMockUser(roles = "USER")
     void testCrearLocalidad_UserSinPermiso_DebeDevolver403Forbidden() throws Exception {
         // ACT & ASSERT
-        mockMvc.perform(post(API_BASE)
+        mockMvc.perform(post(APIBASE)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -159,7 +159,7 @@ public class LocalidadControllerTest {
         when(localidadService.obtenerTodasLocalidades(any(), eq(null))).thenReturn(pageResponse);
 
         // ACT & ASSERT
-        mockMvc.perform(get(API_BASE))
+        mockMvc.perform(get(APIBASE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements", is(1)));
 
@@ -174,10 +174,10 @@ public class LocalidadControllerTest {
     @WithMockUser(roles = "USER")
     void testObtenerPorId_Existente_DebeDevolver200Ok() throws Exception {
         // ARRANGE
-        when(localidadService.obtenerLocalidadPorId(LOCALIDAD_ID)).thenReturn(validResponse);
+        when(localidadService.obtenerLocalidadPorId(LOCALIDADID)).thenReturn(validResponse);
 
         // ACT & ASSERT
-        mockMvc.perform(get(API_BASE + "/{id}", LOCALIDAD_ID)
+        mockMvc.perform(get(APIBASE + "/{id}", LOCALIDADID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre", is("Cádiz")));
@@ -187,11 +187,11 @@ public class LocalidadControllerTest {
     @WithMockUser(roles = "USER")
     void testObtenerPorId_NoExistente_DebeDevolver404NotFound() throws Exception {
         // ARRANGE: Simular la excepción de negocio del Service
-        when(localidadService.obtenerLocalidadPorId(LOCALIDAD_ID))
-                .thenThrow(new ResourceNotFoundException("Localidad", "id", LOCALIDAD_ID));
+        when(localidadService.obtenerLocalidadPorId(LOCALIDADID))
+                .thenThrow(new ResourceNotFoundException("Localidad", "id", LOCALIDADID));
 
         // ACT & ASSERT
-        mockMvc.perform(get(API_BASE + "/{id}", LOCALIDAD_ID)
+        mockMvc.perform(get(APIBASE + "/{id}", LOCALIDADID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -204,11 +204,11 @@ public class LocalidadControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testActualizarLocalidad_Admin_DebeDevolver200Ok() throws Exception {
         // ARRANGE
-        when(localidadService.actualizarLocalidad(eq(LOCALIDAD_ID), any(LocalidadRequest.class)))
+        when(localidadService.actualizarLocalidad(eq(LOCALIDADID), any(LocalidadRequest.class)))
                 .thenReturn(validResponse);
 
         // ACT & ASSERT
-        mockMvc.perform(put(API_BASE + "/{id}", LOCALIDAD_ID)
+        mockMvc.perform(put(APIBASE + "/{id}", LOCALIDADID)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -220,7 +220,7 @@ public class LocalidadControllerTest {
     @WithMockUser(roles = "USER")
     void testActualizarLocalidad_UserSinPermiso_DebeDevolver403Forbidden() throws Exception {
         // ACT & ASSERT
-        mockMvc.perform(put(API_BASE + "/{id}", LOCALIDAD_ID)
+        mockMvc.perform(put(APIBASE + "/{id}", LOCALIDADID)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -237,25 +237,25 @@ public class LocalidadControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testEliminarLocalidad_Admin_DebeDevolver204NoContent() throws Exception {
         // ARRANGE
-        doNothing().when(localidadService).eliminarLocalidad(LOCALIDAD_ID);
+        doNothing().when(localidadService).eliminarLocalidad(LOCALIDADID);
 
         // ACT & ASSERT
-        mockMvc.perform(delete(API_BASE + "/{id}", LOCALIDAD_ID)
+        mockMvc.perform(delete(APIBASE + "/{id}", LOCALIDADID)
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        verify(localidadService, times(1)).eliminarLocalidad(LOCALIDAD_ID);
+        verify(localidadService, times(1)).eliminarLocalidad(LOCALIDADID);
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testEliminarLocalidad_NoExistente_DebeDevolver404NotFound() throws Exception {
         // ARRANGE
-        doThrow(new ResourceNotFoundException("Localidad", "id", LOCALIDAD_ID))
-                .when(localidadService).eliminarLocalidad(LOCALIDAD_ID);
+        doThrow(new ResourceNotFoundException("Localidad", "id", LOCALIDADID))
+                .when(localidadService).eliminarLocalidad(LOCALIDADID);
 
         // ACT & ASSERT
-        mockMvc.perform(delete(API_BASE + "/{id}", LOCALIDAD_ID)
+        mockMvc.perform(delete(APIBASE + "/{id}", LOCALIDADID)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
     }

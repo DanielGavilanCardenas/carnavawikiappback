@@ -21,6 +21,8 @@ import org.springframework.util.StringUtils;
 @Service
 public class ComentarioService {
 
+    public static final String COMENTARIO = "Comentario" ;
+    public static final String COMENTARIO1 = "Comentario1";
     @Autowired
     private ComentarioRepository comentarioRepository;
 
@@ -70,7 +72,7 @@ public class ComentarioService {
     @Transactional(readOnly = true)
     public ComentarioResponse obtenerComentarioPorId(Long id) {
         Comentario comentario = comentarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comentario", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMENTARIO, "id", id));
 
         // Se puede añadir una lógica aquí para denegar el acceso a comentarios no aprobados
         // si el usuario no es ADMIN, pero por ahora se permite a nivel de servicio.
@@ -113,7 +115,7 @@ public class ComentarioService {
     @Transactional
     public ComentarioResponse actualizarComentario(Long id, ComentarioRequest request) {
         Comentario comentarioExistente = comentarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comentario", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMENTARIO, "id", id));
 
         // 1. Buscar entidades relacionadas (se necesita de nuevo si los IDs cambiaron)
         Usuario nuevoUsuario = findUsuario(request.getUsuarioId());
@@ -138,7 +140,7 @@ public class ComentarioService {
     @Transactional
     public void eliminarComentario(Long id) {
         Comentario comentario = comentarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comentario", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMENTARIO1, "id", id));
 
         comentarioRepository.delete(comentario);
     }
@@ -149,7 +151,7 @@ public class ComentarioService {
     @Transactional
     public ComentarioResponse aprobarComentario(Long id) {
         Comentario comentario = comentarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comentario", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(COMENTARIO1, "id", id));
 
         comentario.setAprobado(true);
         Comentario comentarioActualizado = comentarioRepository.save(comentario);

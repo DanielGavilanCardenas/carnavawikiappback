@@ -19,12 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AgrupacionService {
 
+    public static final String AGRUPACION = "Agrupacion";
     @Autowired
     private AgrupacionRepository agrupacionRepository;
 
@@ -69,7 +68,7 @@ public class AgrupacionService {
     @Transactional(readOnly = true)
     public AgrupacionResponse obtenerAgrupacionPorId(Long id) {
         Agrupacion agrupacion = agrupacionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agrupacion", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(AGRUPACION, "id", id));
 
         return agrupacionMapper.toResponse(agrupacion);
     }
@@ -105,7 +104,7 @@ public class AgrupacionService {
     public AgrupacionResponse actualizarAgrupacion(Long id, AgrupacionRequest request) {
         // 1. Verificar si la entidad existe
         Agrupacion agrupacionExistente = agrupacionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agrupacion", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(AGRUPACION, "id", id));
 
         // 2. Buscar la Localidad (si no existe, lanza 404)
         Localidad nuevaLocalidad = localidadRepository.findById(request.getLocalidadId())
@@ -132,7 +131,7 @@ public class AgrupacionService {
     public void eliminarAgrupacion(Long id) {
         // 1. Verificar si la entidad existe
         Agrupacion agrupacion = agrupacionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agrupacion", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(AGRUPACION, "id", id));
 
         // 2. Eliminar
         agrupacionRepository.delete(agrupacion);

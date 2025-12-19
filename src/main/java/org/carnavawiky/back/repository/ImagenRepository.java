@@ -1,6 +1,5 @@
 package org.carnavawiky.back.repository;
 
-import org.carnavawiky.back.model.Agrupacion;
 import org.carnavawiky.back.model.Imagen;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

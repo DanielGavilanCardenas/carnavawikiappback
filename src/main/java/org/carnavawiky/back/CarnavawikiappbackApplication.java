@@ -5,7 +5,7 @@ import org.carnavawiky.back.model.Role.RoleName;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.RoleRepository;
 import org.carnavawiky.back.repository.UsuarioRepository;
-import org.carnavawiky.back.service.EmailService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,10 +14,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Optional;
+import java.util.logging.Logger;
+
+
 
 @SpringBootApplication
 public class CarnavawikiappbackApplication {
+
+    Logger logger = Logger.getLogger(getClass().getName());
+
+    @Value("${app.security.defaultAdminPass}")
+    private String defaultAdminPass;
 
     public static void main(String[] args) {
         SpringApplication.run(CarnavawikiappbackApplication.class, args);
@@ -36,9 +43,9 @@ public class CarnavawikiappbackApplication {
             PasswordEncoder passwordEncoder) {
 
         return args -> {
-            System.out.println("---------------------------------------------------------");
-            System.out.println("✅ INICIANDO Data Seeding de Seguridad (app.security.seed-enabled=true)");
-            System.out.println("---------------------------------------------------------");
+            logger.info("---------------------------------------------------------");
+            logger.info("INICIANDO Data Seeding de Seguridad (app.security.seed-enabled=true)");
+            logger.info("---------------------------------------------------------");
 
             // =======================================================
             // DATA SEEDING DE ROLES
@@ -60,7 +67,7 @@ public class CarnavawikiappbackApplication {
             // DATA SEEDING DE USUARIO ADMIN
             // =======================================================
             if (usuarioRepository.findByEmail("admin@carnavawiky.com").isEmpty()) {
-                System.out.println("Creando usuario administrador inicial...");
+                logger.info("Creando usuario administrador inicial...");
 
                 Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
                         .orElseThrow(() -> new RuntimeException("Error: Role 'ROLE_ADMIN' no encontrado en DB."));
@@ -68,7 +75,7 @@ public class CarnavawikiappbackApplication {
                 Usuario adminUser = new Usuario();
                 adminUser.setUsername("admin");
                 adminUser.setEmail("admin@carnavawiky.com");
-                adminUser.setPassword(passwordEncoder.encode("Admin123!"));
+                adminUser.setPassword(passwordEncoder.encode(defaultAdminPass));
 
                 Set<Role> roles = new HashSet<>();
                 roles.add(adminRole);
@@ -77,10 +84,10 @@ public class CarnavawikiappbackApplication {
                 adminUser.setEnabled(true);
 
                 usuarioRepository.save(adminUser);
-                System.out.println("Usuario Administrador creado. Username: admin | Pass: Admin123!");
+                logger.info("Usuario Administrador creado. Username: admin | Pass: " + defaultAdminPass +"!");
             }
 
-            System.out.println("Data Seeding de seguridad completado.");
+            logger.info("Data Seeding de seguridad completado.");
         };
     }
 

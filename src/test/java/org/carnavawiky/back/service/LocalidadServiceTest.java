@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
  * Usamos Mockito para simular (mockear) las dependencias (Repository y Mapper).
  */
 @ExtendWith(MockitoExtension.class)
-public class LocalidadServiceTest {
+class LocalidadServiceTest {
 
     // Instancia real de la clase a probar, donde se inyectarán los Mocks
     @InjectMocks

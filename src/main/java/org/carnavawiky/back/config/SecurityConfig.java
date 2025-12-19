@@ -29,6 +29,7 @@ import java.util.Arrays;
 @EnableMethodSecurity(prePostEnabled = true) // 💡 CRÍTICO: Habilita el uso de @PreAuthorize
 public class SecurityConfig {
 
+    public static final String ADMIN = "ADMIN";
     @Autowired
     private JwtTokenFilter jwtTokenFilter; // El filtro que valida el JWT
 
@@ -64,15 +65,15 @@ public class SecurityConfig {
 
                         // 3. PROTECCIÓN DE LOCALIDADES (POST/PUT/DELETE)
                         // POST (Crear): Solo ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole(ADMIN)
                         // PUT (Actualizar): Solo ADMIN
-                        .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole(ADMIN)
                         // DELETE (Eliminar): Solo ADMIN
-                        .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole(ADMIN)
 
                         // 4. Endpoints protegidos por Roles generales
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/especialisto/**").hasAnyRole("ADMIN", "ESPECIALISTO")
+                        .requestMatchers("/api/admin/**").hasRole(ADMIN)
+                        .requestMatchers("/api/especialisto/**").hasAnyRole(ADMIN, "ESPECIALISTO")
 
                         // 5. Resto de endpoints (incluyendo GET), requiere autenticación (JWT Válido)
                         .anyRequest().authenticated()

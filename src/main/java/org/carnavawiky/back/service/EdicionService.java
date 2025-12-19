@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 @Service
 public class EdicionService {
 
+    public static final String EDICION = "Edicion";
     @Autowired
     private EdicionRepository edicionRepository;
 
@@ -59,7 +60,7 @@ public class EdicionService {
     @Transactional(readOnly = true)
     public EdicionResponse obtenerEdicionPorId(Long id) {
         Edicion edicion = edicionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Edicion", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(EDICION, "id", id));
         return edicionMapper.toResponse(edicion);
     }
 
@@ -97,7 +98,7 @@ public class EdicionService {
     @Transactional
     public EdicionResponse actualizarEdicion(Long id, EdicionRequest request) {
         Edicion edicionExistente = edicionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Edicion", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(EDICION, "id", id));
 
         // 1. Buscar Concurso (N:1) (Se necesita de nuevo si el ID cambió)
         Concurso nuevoConcurso = obtenerConcurso(request.getConcursoId());
@@ -118,7 +119,7 @@ public class EdicionService {
     @Transactional
     public void eliminarEdicion(Long id) {
         Edicion edicion = edicionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Edicion", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(EDICION, "id", id));
 
         // NOTA: La eliminación fallará si existen Premios vinculados (Integridad Referencial)
         edicionRepository.delete(edicion);
