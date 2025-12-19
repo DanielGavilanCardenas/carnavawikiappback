@@ -21,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = ConcursoController.class, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = WebConfig.class)
 })
-@Import({SecurityConfig.class, FileStorageProperties.class})
+@Import({SecurityConfig.class, JwtService.class})
 public class ConcursoControllerTest {
 
     @Autowired
@@ -48,9 +49,9 @@ public class ConcursoControllerTest {
     @MockBean
     private ConcursoService concursoService;
 
-    // Mocks de infraestructura de seguridad (Obligatorios en tu configuración)
+    // Mocks de infraestructura de seguridad
     @MockBean
-    private JwtService jwtService;
+    private FileStorageProperties fileStorageProperties;
     @MockBean
     private UserDetailsService userDetailsService;
     @MockBean
@@ -66,17 +67,60 @@ public class ConcursoControllerTest {
         concursoRequest = new ConcursoRequest();
         concursoRequest.setNombre("COAC");
         concursoRequest.setLocalidadId(1L);
+        concursoRequest.setEstaActivo(true);
 
         concursoResponse = new ConcursoResponse();
         concursoResponse.setId(1L);
         concursoResponse.setNombre("COAC");
         concursoResponse.setLocalidadNombre("Cádiz");
+        concursoResponse.setEstaActivo(true);
     }
 
+    // =======================================================
+    // 1. CREAR (POST)
+    // =======================================================
+    @Test
+    @DisplayName("ADMIN puede crear un concurso")
+    @WithMockUser(roles = "ADMIN")
+    void testCrearConcurso_Admin_Ok() throws Exception {
+        when(concursoService.crearConcurso(any(ConcursoRequest.class))).thenReturn(concursoResponse);
 
+        mockMvc.perform(post("/api/concursos")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(concursoRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.nombre").value("COAC"));
+    }
 
+    @Test
+    @DisplayName("USER no puede crear un concurso")
+    @WithMockUser(roles = "USER")
+    void testCrearConcurso_User_Forbidden() throws Exception {
+        mockMvc.perform(post("/api/concursos")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(concursoRequest)))
+                .andExpect(status().isForbidden());
+    }
 
+    @Test
+    @DisplayName("Debe devolver 400 si el request es inválido (nombre vacío)")
+    @WithMockUser(roles = "ADMIN")
+    void testCrearConcurso_BadRequest() throws Exception {
+        concursoRequest.setNombre(""); // Falla validación @NotBlank
 
+        mockMvc.perform(post("/api/concursos")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(concursoRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // =======================================================
+    // 2. OBTENER TODOS (GET)
+    // =======================================================
     @Test
     @DisplayName("Obtener todos los concursos con paginación y búsqueda")
     @WithMockUser(roles = "USER")
@@ -86,7 +130,6 @@ public class ConcursoControllerTest {
                 .totalElements(1L)
                 .build();
 
-        // Siguiendo tu patrón, el service suele recibir Pageable y un String de búsqueda
         when(concursoService.obtenerTodosConcursos(any(Pageable.class), any()))
                 .thenReturn(pageResponse);
 
@@ -98,6 +141,9 @@ public class ConcursoControllerTest {
                 .andExpect(jsonPath("$.content[0].nombre").value("COAC"));
     }
 
+    // =======================================================
+    // 3. OBTENER POR ID (GET)
+    // =======================================================
     @Test
     @DisplayName("Obtener concurso por ID")
     @WithMockUser(roles = "USER")
@@ -110,7 +156,37 @@ public class ConcursoControllerTest {
                 .andExpect(jsonPath("$.nombre").value("COAC"));
     }
 
+    // =======================================================
+    // 4. ACTUALIZAR (PUT)
+    // =======================================================
+    @Test
+    @DisplayName("ADMIN puede actualizar un concurso")
+    @WithMockUser(roles = "ADMIN")
+    void testActualizarConcurso_Admin_Ok() throws Exception {
+        when(concursoService.actualizarConcurso(eq(1L), any(ConcursoRequest.class))).thenReturn(concursoResponse);
 
+        mockMvc.perform(put("/api/concursos/1")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(concursoRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("COAC"));
+    }
+
+    @Test
+    @DisplayName("USER no puede actualizar un concurso")
+    @WithMockUser(roles = "USER")
+    void testActualizarConcurso_User_Forbidden() throws Exception {
+        mockMvc.perform(put("/api/concursos/1")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(concursoRequest)))
+                .andExpect(status().isForbidden());
+    }
+
+    // =======================================================
+    // 5. ELIMINAR (DELETE)
+    // =======================================================
     @Test
     @DisplayName("ADMIN puede eliminar un concurso")
     @WithMockUser(roles = "ADMIN")
@@ -124,5 +200,12 @@ public class ConcursoControllerTest {
         verify(concursoService, times(1)).eliminarConcurso(1L);
     }
 
-
+    @Test
+    @DisplayName("USER no puede eliminar un concurso")
+    @WithMockUser(roles = "USER")
+    void testEliminarConcurso_User_Forbidden() throws Exception {
+        mockMvc.perform(delete("/api/concursos/1")
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+    }
 }
