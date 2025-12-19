@@ -16,6 +16,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     // Buscamos el token por el objeto Usuario
     Optional<RefreshToken> findByUsuario(Usuario usuario);
 
-    // Si ya tienes un método para buscar por ID de usuario, también sirve:
+    // Si ya tienes un mét para buscar por ID de usuario, también sirve:
     Optional<RefreshToken> findByUsuarioId(Long usuarioId);
 }

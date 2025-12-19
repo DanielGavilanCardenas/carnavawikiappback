@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
     // =======================================================
 
     // Cambia esto en GlobalExceptionHandler.java
-    @ExceptionHandler(MethodArgumentNotValidException.class) // Añade esta anotación
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorDetails> handleMethodArgumentNotValidException( // Cambia el nombre y tipo
                                                                                MethodArgumentNotValidException exception,
                                                                                WebRequest webRequest) {

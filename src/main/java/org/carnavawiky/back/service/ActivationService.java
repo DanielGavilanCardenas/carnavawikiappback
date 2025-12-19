@@ -20,7 +20,7 @@ public class ActivationService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private EmailService emailService; // <--- INYECCIÓN DEL SERVICIO REAL
+    private EmailService emailService;
 
     // Configuramos la URL base de tu API (debe coincidir con la configuración real)
     @Value("${app.base-url:http://localhost:8083}") // Valor por defecto si no está en application.properties
@@ -51,12 +51,11 @@ public class ActivationService {
                 + "Si tienes algún problema, contacta con soporte.";
 
         // Llamada al EmailService
-        emailService.sendEmail(usuario.getEmail(), subject, body); // <--- USO DEL SERVICIO REAL
+        emailService.sendEmail(usuario.getEmail(), subject, body);
     }
 
     /**
      * Procesa la activación de la cuenta usando el token recibido por el usuario.
-     * ... (El resto del método activateUser() permanece igual)
      */
     @Transactional
     public void activateUser(String token) {

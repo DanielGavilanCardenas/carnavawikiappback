@@ -13,7 +13,7 @@ public class LocalidadMapper {
      * Retorna null si el request es null.
      */
     public Localidad toEntity(LocalidadRequest request) {
-        if (request == null) { // <-- Corrección de Null Check
+        if (request == null) {
             return null;
         }
         Localidad localidad = new Localidad();
@@ -26,7 +26,7 @@ public class LocalidadMapper {
      * Retorna null si la entidad es null.
      */
     public LocalidadResponse toResponse(Localidad entity) {
-        if (entity == null) { // <-- Corrección de Null Check
+        if (entity == null) {
             return null;
         }
         LocalidadResponse response = new LocalidadResponse();

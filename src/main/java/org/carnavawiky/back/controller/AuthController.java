@@ -2,7 +2,7 @@ package org.carnavawiky.back.controller;
 
 import jakarta.validation.Valid;
 import org.carnavawiky.back.dto.auth.LoginRequest;
-import org.carnavawiky.back.dto.auth.PasswordResetRequest; // Importamos el nuevo DTO
+import org.carnavawiky.back.dto.auth.PasswordResetRequest;
 import org.carnavawiky.back.dto.auth.RegisterRequest;
 import org.carnavawiky.back.dto.auth.TokenResponse;
 import org.carnavawiky.back.service.AuthService;
@@ -60,9 +60,7 @@ public class AuthController {
     // =======================================================
     @PostMapping("/forgot-password")
     public ResponseEntity<String> requestPasswordReset(@RequestBody String email) {
-        // Nota: Se asume que el body es solo la cadena del email. Podríamos usar un DTO si queremos validación.
-        // Si el email viene como JSON: {"email": "test@example.com"}, necesitarías un DTO.
-        // Si viene como raw string, usar String.
+        // Nota: Se asume que el body es solo la cadena del email.
         authService.requestPasswordReset(email);
         return ResponseEntity.ok("Si la dirección de email está registrada, se ha enviado un enlace para restablecer la contraseña.");
     }

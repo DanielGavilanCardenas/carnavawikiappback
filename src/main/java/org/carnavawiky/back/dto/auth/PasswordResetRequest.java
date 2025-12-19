@@ -14,6 +14,6 @@ public class PasswordResetRequest {
     private String token;
 
     @NotBlank(message = "La nueva contraseña es obligatoria.")
-    // Normalmente aquí habría validaciones de seguridad de contraseña (min/max length, symbols, etc.)
+    // TODO:Normalmente aquí habría validaciones de seguridad de contraseña (min/max length, symbols, etc.)
     private String newPassword;
 }

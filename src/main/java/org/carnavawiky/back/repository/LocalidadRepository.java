@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LocalidadRepository extends JpaRepository<Localidad, Long> {
 
-    // Método para paginación y búsqueda por nombre (sin distinción de mayúsculas/minúsculas)
+    // Mét para paginación y búsqueda por nombre (sin distinción de mayúsculas/minúsculas)
     Page<Localidad> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 }

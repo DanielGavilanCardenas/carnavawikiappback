@@ -23,7 +23,7 @@ public class ConcursoService {
     private ConcursoRepository concursoRepository;
 
     @Autowired
-    private LocalidadRepository localidadRepository; // Necesario para buscar la relación
+    private LocalidadRepository localidadRepository;
 
     @Autowired
     private ConcursoMapper concursoMapper;

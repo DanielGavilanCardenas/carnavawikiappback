@@ -20,7 +20,7 @@ public interface ImagenRepository extends JpaRepository<Imagen, Long> {
     // 2. Listar todas las imágenes de una Agrupación
     List<Imagen> findByAgrupacion_Id(Long agrupacionId);
 
-    // 3. Método para desmarcar la portada actual antes de marcar una nueva
+    // 3. Mét para desmarcar la portada actual antes de marcar una nueva
     @Modifying
     @Query("UPDATE Imagen i SET i.esPortada = FALSE WHERE i.agrupacion.id = :agrupacionId AND i.esPortada = TRUE")
     void desmarcarPortadaActual(@Param("agrupacionId") Long agrupacionId);

@@ -34,15 +34,12 @@ public class AgrupacionService {
     @Autowired
     private AgrupacionMapper agrupacionMapper;
 
-    // =======================================================
-    // AÑADIDO: REPOSITORIO DE LOCALIDAD
-    // =======================================================
     @Autowired
     private LocalidadRepository localidadRepository;
 
 
     // =======================================================
-    // MÉTODO 1: CREAR (POST) - MODIFICADO para Localidad
+    // MÉT 1: CREAR (POST) - MODIFICADO para Localidad
     // =======================================================
 
     @Transactional
@@ -66,7 +63,7 @@ public class AgrupacionService {
     }
 
     // =======================================================
-    // MÉTODO 2: OBTENER POR ID (GET /ID)
+    // MÉT 2: OBTENER POR ID (GET /ID)
     // =======================================================
 
     @Transactional(readOnly = true)
@@ -101,7 +98,7 @@ public class AgrupacionService {
     }
 
     // =======================================================
-    // MÉTODO 4: ACTUALIZAR (PUT /ID) - MODIFICADO para Localidad
+    // MÉT 4: ACTUALIZAR (PUT /ID) - MODIFICADO para Localidad
     // =======================================================
 
     @Transactional
@@ -128,7 +125,7 @@ public class AgrupacionService {
     }
 
     // =======================================================
-    // MÉTODO 5: ELIMINAR (DELETE /ID)
+    // MÉT 5: ELIMINAR (DELETE /ID)
     // =======================================================
 
     @Transactional

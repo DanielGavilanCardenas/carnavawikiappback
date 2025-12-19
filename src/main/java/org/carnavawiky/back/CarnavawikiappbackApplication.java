@@ -24,7 +24,7 @@ public class CarnavawikiappbackApplication {
     }
 
     @Bean
-    // NUEVA ANOTACIÓN: Solo crea este bean si la propiedad es 'true'
+    // Solo crea este bean si la propiedad es 'true'
     @ConditionalOnProperty(
             name = "app.security.seed-enabled",
             havingValue = "true",

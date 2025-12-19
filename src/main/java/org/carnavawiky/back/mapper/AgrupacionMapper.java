@@ -14,10 +14,10 @@ public class AgrupacionMapper {
      * Convierte un AgrupacionRequest a una entidad Agrupacion.
      * @param request El DTO de entrada.
      * @param usuarioCreador El Usuario que está creando la agrupación.
-     * @param localidad La entidad Localidad ya cargada desde la BBDD. // << NUEVO PARAMETRO
+     * @param localidad La entidad Localidad ya cargada desde la BBDD.
      * @return La entidad Agrupacion lista para ser persistida.
      */
-    public Agrupacion toEntity(AgrupacionRequest request, Usuario usuarioCreador, Localidad localidad) { // << FIRMA MODIFICADA
+    public Agrupacion toEntity(AgrupacionRequest request, Usuario usuarioCreador, Localidad localidad) {
         Agrupacion agrupacion = new Agrupacion();
         agrupacion.setNombre(request.getNombre());
         agrupacion.setDescripcion(request.getDescripcion());

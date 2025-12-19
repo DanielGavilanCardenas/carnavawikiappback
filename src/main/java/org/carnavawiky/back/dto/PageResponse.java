@@ -17,7 +17,7 @@ public class PageResponse<T> {
     private int totalPages;
     private boolean isLast;
 
-    // Método estático de utilidad para construir el DTO a partir del objeto Page de Spring.
+    // Mét estático de utilidad para construir el DTO a partir del objeto Page de Spring.
     public static <T> PageResponse<T> fromPage(Page<T> page) {
         return PageResponse.<T>builder()
                 .content(page.getContent())
