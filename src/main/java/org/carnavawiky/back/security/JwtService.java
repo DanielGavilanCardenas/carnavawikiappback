@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,9 +36,9 @@ public class JwtService {
     public String generateAccessToken(Authentication authentication) {
 
         // 1. Obtiene los roles (Authorities) del usuario para incluirlos en el token
-        String roles = authentication.getAuthorities().stream()
+        List<String> rolesList = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.toList());
 
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
@@ -49,7 +50,7 @@ public class JwtService {
         // 2. Construye y firma el token con la clave secreta (JJWT)
         return Jwts.builder()
                 .setSubject(authentication.getName()) // Username
-                .claim("roles", roles)              // Roles
+                .claim("roles", rolesList)          // Roles (es un Array JSON: ["ROLE_ADMIN", "ROLE_USER"])
                 .setIssuedAt(now)
                 .setExpiration(expirationDate)
                 .signWith(getSigningKey())

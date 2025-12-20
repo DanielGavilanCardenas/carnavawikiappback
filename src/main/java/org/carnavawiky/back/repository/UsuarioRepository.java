@@ -1,23 +1,38 @@
 package org.carnavawiky.back.repository;
 
 import org.carnavawiky.back.model.Usuario;
+import org.springframework.data.domain.Page; // <-- NUEVA IMPORTACIÓN
+import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    // Necesario para la autenticación y el registro (validar si existe)
+    // NUEVO MÉTO PARA BÚSQUEDA (Pagina y filtra por username o email)
+    Page<Usuario> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String username, String email, Pageable pageable);
+
     Optional<Usuario> findByUsername(String username);
 
-    // Necesario para el registro (validar si el email ya existe)
-    boolean existsByEmail(String email);
+    // Mét necesario para la validación de unicidad en POST/PUT
+    Boolean existsByUsername(String username);
+    Boolean existsByEmail(String email);
 
-    // Necesario para el registro (validar si el username ya existe)
-    boolean existsByUsername(String username);
-
-    // Necesario para la activación por email
+    // Mét para buscar en el flujo de Activación
     Optional<Usuario> findByActivationToken(String activationToken);
+
+    // Mét para buscar en el flujo de Reseteo (por email)
+    Optional<Usuario> findByEmail(String email);
+
+    // =======================================================
+    // 🔑 MÉT REQUERIDO PARA EL RESETEO DE CONTRASEÑA
+    // =======================================================
+    Optional<Usuario> findByResetToken(String resetToken);
+
+    // =======================================================
+    // 🔍 NUEVO MÉT PARA PAGINACIÓN Y BÚSQUEDA
+    // =======================================================
+    // Permite buscar por parte del username O del email, ignorando mayúsculas, con paginación.
+    Page<Usuario> findAllByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email, Pageable pageable);
 }

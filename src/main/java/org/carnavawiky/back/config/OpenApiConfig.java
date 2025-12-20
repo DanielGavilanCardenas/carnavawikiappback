@@ -5,6 +5,8 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,12 +15,18 @@ public class OpenApiConfig {
 
     private static final String SCHEME_NAME = "BearerAuth";
 
+    @Autowired(required = false) // Opcional por si no se genera el build-info en tests
+    private BuildProperties buildProperties;
+
     @Bean
     public OpenAPI customOpenAPI() {
+        // Si buildProperties está disponible, usamos su versión. Si no, un valor por defecto.
+        String version = (buildProperties != null) ? buildProperties.getVersion() : "dev-snapshot";
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Carnavawiky REST API")
-                        .version("v1.0")
+                        .version(version)
                         .description("Documentación de la API de Carnavawiky, incluyendo autenticación JWT."))
 
                 // 1. Define el Componente de Seguridad (el esquema JWT Bearer)
