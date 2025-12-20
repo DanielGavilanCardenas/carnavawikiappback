@@ -44,6 +44,12 @@ jobs:
           update-comment: true
           continue-on-error: false
 
+      - name: 0c. Upload Coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-html
+          path: target/site/jacoco/
+
       # PASO 1 EN ADELANTE: Solo si lo anterior fue exitoso
       - name: 1. Remove SNAPSHOT and Get Version
         id: prep
