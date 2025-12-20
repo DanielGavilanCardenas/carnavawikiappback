@@ -253,6 +253,14 @@
                         </exclude>
                     </excludes>
                 </configuration>
+                <!-- Ejecución build-info para generar BuildProperties -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!--  RESOURCES PLUGIN: Garantiza que los archivos de configuración (como application.properties)
              se procesen siempre bajo el estándar UTF-8, evitando errores de lectura de caracteres. -->

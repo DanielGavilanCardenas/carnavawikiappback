@@ -33,7 +33,6 @@ class OpenApiConfigTest {
 
         // 1. Verificar información básica
         assertEquals("Carnavawiky REST API", openAPI.getInfo().getTitle());
-        assertEquals("v1.0", openAPI.getInfo().getVersion());
 
         // 2. Verificar que existe el esquema de seguridad BearerAuth
         SecurityScheme securityScheme = openAPI.getComponents().getSecuritySchemes().get("BearerAuth");
