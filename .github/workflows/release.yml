@@ -12,6 +12,7 @@ jobs:
       contents: write
       packages: write
       pull-requests: write # Necesario para el reporte de cobertura
+      checks: write
     
     steps:
       - name: Checkout code
@@ -42,6 +43,12 @@ jobs:
           title: "Calidad de Código para Release"
           update-comment: true
           continue-on-error: false
+
+      - name: 0c. Upload Coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-html
+          path: target/site/jacoco/
 
       # PASO 1 EN ADELANTE: Solo si lo anterior fue exitoso
       - name: 1. Remove SNAPSHOT and Get Version
