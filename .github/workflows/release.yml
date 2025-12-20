@@ -12,6 +12,7 @@ jobs:
       contents: write
       packages: write
       pull-requests: write # Necesario para el reporte de cobertura
+      checks: write
     
     steps:
       - name: Checkout code
