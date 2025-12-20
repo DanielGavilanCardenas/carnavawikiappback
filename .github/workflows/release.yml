@@ -85,3 +85,10 @@ jobs:
           else
             echo "Sin cambios para la versión snapshot."
           fi
+
+      - name: 6. Upload JAR to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-boot-app-${{ steps.prep.outputs.RELEASE_VERSION }}
+          path: target/*.jar
+          retention-days: 7 # Se borrará automáticamente tras 7 días para ahorrar espacio
