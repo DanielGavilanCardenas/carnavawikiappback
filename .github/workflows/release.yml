@@ -41,6 +41,7 @@ jobs:
           min-coverage-changed-files: 80
           title: "Calidad de Código para Release"
           update-comment: true
+          continue-on-error: false
 
       # PASO 1 EN ADELANTE: Solo si lo anterior fue exitoso
       - name: 1. Remove SNAPSHOT and Get Version
