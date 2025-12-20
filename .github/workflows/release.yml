@@ -63,9 +63,18 @@ jobs:
 
       - name: 5. Bump to Next SNAPSHOT on Develop
         run: |
-          git fetch origin develop
-          git checkout develop || git checkout -b develop origin/develop
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Intentamos traer develop, si falla, la creamos desde el punto actual (master)
+          if git fetch origin develop; then
+            git checkout develop
+          else
+            echo "La rama develop no existe. Creándola desde master..."
+            git checkout -b develop
+          fi
           
+          # Incrementamos la versión
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           
@@ -74,5 +83,5 @@ jobs:
             git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
             git push origin develop
           else
-            echo "Develop ya tiene la versión snapshot correcta."
+            echo "Sin cambios para la versión snapshot."
           fi
