@@ -23,7 +23,7 @@
     El sufijo "SNAPSHOT" significa que es una versión en construcción (no final).
     Se incluye para llevar un control del ciclo de vida;
     cuando el código sea estable, se cambiará a una versión final como 1.0.0.-->
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
     <!-- NAME: Es un nombre amigable para el proyecto.
     Su finalidad es meramente informativa para que, al generar reportes o ver el proyecto
     en herramientas de gestión, sea más fácil de leer que el ArtifactId.-->
