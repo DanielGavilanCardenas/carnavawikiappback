@@ -1,4 +1,4 @@
-name: Full Release Cycle (Master Clean)
+name: Full Release Cycle (Packages)
 
 on:
   push:
@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write # Permiso vital para subir a GitHub Packages
     
     steps:
       - name: Checkout code
@@ -23,11 +24,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
+          # Esto configura el archivo settings.xml automáticamente
+          server-id: github 
+          settings-path: ${{ github.workspace }} 
 
       - name: 1. Remove SNAPSHOT and Get Version
         id: prep
         run: |
-          # Usamos -DgenerateBackupPoms=false para evitar archivos temporales .versionsBackup
           mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
@@ -35,25 +38,31 @@ jobs:
       - name: 2. Build and Package
         run: mvn clean package -DskipTests
 
-      - name: 3. Commit Release Version to Master
+      - name: 3. Publish to GitHub Packages
+        run: mvn deploy -DskipTests -s ${{ github.workspace }}/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 4. Upload JAR to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ steps.prep.outputs.RELEASE_VERSION }}
+          path: target/*.jar
+          retention-days: 7
+
+      - name: 5. Commit Release Version to Master
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Verificamos si hay cambios reales en el pom.xml
           if [[ -n "$(git status --porcelain pom.xml)" ]]; then
             git add pom.xml
             git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }}"
             git push origin master
-          else
-            echo "La versión ya estaba limpia en master, no se requiere commit."
           fi
-          
-          # El tag se intenta crear siempre. Si ya existe, no detiene el flujo.
-          git tag v${{ steps.prep.outputs.RELEASE_VERSION }} || echo "El tag ya existe"
+          git tag v${{ steps.prep.outputs.RELEASE_VERSION }} || echo "Tag exists"
           git push origin --tags
 
-      - name: 4. Create GitHub Release
+      - name: 6. Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.prep.outputs.RELEASE_VERSION }}
@@ -61,34 +70,17 @@ jobs:
           files: target/*.jar
           generate_release_notes: true
 
-      - name: 5. Bump to Next SNAPSHOT on Develop
+      - name: 7. Bump to Next SNAPSHOT on Develop
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Intentamos traer develop, si falla, la creamos desde el punto actual (master)
           if git fetch origin develop; then
             git checkout develop
           else
-            echo "La rama develop no existe. Creándola desde master..."
             git checkout -b develop
           fi
-          
-          # Incrementamos la versión
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          
           if [[ -n "$(git status --porcelain pom.xml)" ]]; then
             git add pom.xml
             git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
             git push origin develop
-          else
-            echo "Sin cambios para la versión snapshot."
           fi
-
-      - name: 6. Upload JAR to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: spring-boot-app-${{ steps.prep.outputs.RELEASE_VERSION }}
-          path: target/*.jar
-          retention-days: 7 # Se borrará automáticamente tras 7 días para ahorrar espacio
