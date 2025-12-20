@@ -1,148 +1,303 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!-- PARENT: Es el "cerebro" del proyecto. Gestiona automáticamente las versiones compatibles de todas
+    las librerías de Spring para evitar conflictos entre ellas. -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.1</version>
+        <relativePath/>
+    </parent>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.1</version>
-		<relativePath/>
-	</parent>
+    <!-- GROUPID: Es el identificador único de la organización o grupo que crea el proyecto.
+    Sigue la convención de nombres de paquetes de Java (normalmente el dominio a la inversa).
+     Se incluye para evitar conflictos con proyectos de otras organizaciones. -->
+    <groupId>org.carnavawiky.back</groupId>
+    <!-- ARTIFACTID: Es el nombre específico del archivo (JAR) que se genera al compilar.
+    Es la identidad de tu aplicación dentro del grupo. Se incluye para distinguir este módulo (el backend)
+    de otros posibles módulos como el frontend o librerías compartidas.-->
+    <artifactId>carnavawikiappback</artifactId>
+    <!-- VERSION: Indica el estado actual del desarrollo.
+    El sufijo "SNAPSHOT" significa que es una versión en construcción (no final).
+    Se incluye para llevar un control del ciclo de vida;
+    cuando el código sea estable, se cambiará a una versión final como 1.0.0.-->
+    <version>0.0.3-SNAPSHOT</version>
+    <!-- NAME: Es un nombre amigable para el proyecto.
+    Su finalidad es meramente informativa para que, al generar reportes o ver el proyecto
+    en herramientas de gestión, sea más fácil de leer que el ArtifactId.-->
+    <name>carnavawikiappback</name>
+    <!-- DESCRIPTION: Proporciona un resumen de qué hace la aplicación.
+    Se incluye para documentar el propósito del proyecto,
+    facilitando que cualquier desarrollador nuevo entienda rápidamente que este es el corazón
+    (la API) del sistema Carnavawiky.-->
+    <description>Backend API para Carnavawiky</description>
 
-	<groupId>org.carnavawiky.back</groupId>
-	<artifactId>carnavawikiappback</artifactId>
-	<version>0.0.2</version>
-	<name>carnavawikiappback</name>
-	<description>Backend API para Carnavawiky</description>
+    <!-- PROPERTIES: Esta sección actúa como un panel de control donde se definen
+     variables globales. Se utiliza para centralizar valores que Maven usará en
+     diferentes partes del proceso de compilación,
+     facilitando cambios rápidos en el proyecto desde un solo lugar.-->
+    <properties>
+        <!-- JAVA.VERSION: Especifica la versión mínima del JDK necesaria para compilar
+         y ejecutar tu código. Al fijarlo en 17 (una versión LTS o de soporte a largo plazo),
+          se asegura que el proyecto use características modernas de Java
+           y que sea compatible con las exigencias de Spring Boot 3.3.1-->
+        <java.version>17</java.version>
+        <!-- PROJECT.BUILD.SOURCEENCODING: Indica a Maven que debe leer tus archivos de código
+         fuente (.java) usando la codificación UTF-8.
+         Su finalidad es evitar que caracteres especiales,
+         como tildes o la letra "ñ" en los comentarios, se corrompan al compilar el proyecto
+         en diferentes sistemas operativos.-->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- PROJECT.REPORTING.OUTPUTENCODING: Define que todos los informes
+         y reportes generados por Maven (como resultados de tests o análisis de código)
+         se escriban también en formato UTF-8. Se incluye para garantizar que
+         la documentación técnica generada sea legible y mantenga el formato de texto correcto.-->
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
-	<properties>
-		<java.version>17</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
+    <!-- DEPENDENCIES: Es el "listado de la compra" de tu proyecto.
+    Su finalidad es agrupar todos los módulos externos, librerías y frameworks que el backend
+    necesita para funcionar.
+    Se incluyen aquí para que Maven las descargue automáticamente desde internet
+    (Repositorio Central), evitando que tengas que buscar, bajar y configurar manualmente
+    archivos .jar uno por uno. Sin esta sección, el proyecto no tendría acceso a
+    herramientas como Spring, Security o JPA.-->
+    <dependencies>
 
-	<dependencies>
+        <!-- CACHE: Se incluye para mejorar la velocidad. Permite guardar en memoria RAM datos que no cambian mucho
+        (como listas de modalidades), evitando consultar la base de datos en cada petición. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!-- JAKARTA XML BIND API (JAXB):
+        Su finalidad es permitir la conversión de objetos Java a formato XML y viceversa
+         (proceso conocido como Marshalling y Unmarshalling).
+         Se incluye en el proyecto porque, a partir de Java 11,
+         este módulo se eliminó del JDK estándar;
+         por tanto, si la aplicación necesita procesar documentos XML,
+         generar respuestas en este formato o utilizar librerías que dependan de él,
+         es obligatorio añadirlo manualmente para que el código sea capaz de entender las anotaciones de XML.-->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+        <!-- WEB: Es la base de cualquier API. Incluye el servidor Tomcat y permite que
+        la aplicación escuche peticiones HTTP (GET, POST, etc.) y responda en formato JSON. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-validation</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.5.0</version>
-		</dependency>
+        <!-- SPRING-BOOT-STARTER: Es la dependencia "núcleo" o base de cualquier aplicación
+         Spring Boot. Su finalidad es proporcionar las configuraciones automáticas fundamentales,
+         el manejo de propiedades y el soporte básico del framework.
+         Se incluye porque es el cimiento sobre el que se asientan todos los demás componentes del sistema.-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <!-- EXCLUSIONS: Esta sección se utiliza para dar instrucciones a Maven de que NO descargue una librería
+             específica que viene incluida por defecto dentro del starter.-->
+            <exclusions>
+                <!-- EXCLUSION LOGGING: Se incluye esta exclusión para eliminar el sistema de logs por defecto (Logback).
+                La finalidad suele ser evitar conflictos de librerías o permitir que tú mismo configures un sistema de
+                 log diferente o más avanzado (como Log4j2) sin que el sistema estándar de Spring Boot interfiera.-->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
+        <!-- SPRING-BOOT-STARTER-LOG4J2: Su finalidad es proporcionar un sistema de registro (logs) de alto rendimiento.
+         Se incluye como sustituto del sistema estándar porque Log4j2 es mucho más rápido, utiliza menos memoria
+         y permite configuraciones avanzadas, como el guardado de errores en archivos separados o el envío de log
+         s a bases de datos en tiempo real. Es vital para monitorizar qué ocurre en el backend de Carnavawiky durante su ejecución.-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-api</artifactId>
-			<version>0.12.5</version>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-impl</artifactId>
-			<version>0.12.5</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-jackson</artifactId>
-			<version>0.12.5</version>
-			<scope>runtime</scope>
-		</dependency>
+        <!-- TEST STARTER: Contiene JUnit y Mockito. Es vital para asegurar la calidad; se usa para escribir pruebas automáticas
+         que verifiquen que un cambio nuevo no rompe lo que ya funcionaba. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-	</dependencies>
+        <!-- DATA JPA: Es el motor que traduce tus clases Java (como Edicion o Persona) a tablas de base de datos. Se incluye para no tener que escribir código SQL manual y gestionar el CRUD fácilmente. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.3.1</version> <configuration>
-				<encoding>UTF-8</encoding>
-			</configuration>
-			</plugin>
-			<plugin>
-			    <groupId>org.jacoco</groupId>
-			    <artifactId>jacoco-maven-plugin</artifactId>
-			    <version>0.8.11</version>
-			    <executions>
-			        <execution>
-			            <goals>
-			                <goal>prepare-agent</goal>
-			            </goals>
-			        </execution>
-			        <execution>
-			            <id>report</id>
-			            <phase>test</phase>
-			            <goals>
-			                <goal>report</goal>
-			            </goals>
-			        </execution>
-			    </executions>
-			</plugin>
-		</plugins>
-	</build>
-	<distributionManagement>
+        <!-- MYSQL CONNECTOR J: Es el controlador (driver) oficial que permite a tu aplicación Java comunicarse
+        con un servidor de base de datos MySQL. Su finalidad es traducir las peticiones de Hibernate/JPA al lenguaje
+        que MySQL entiende. Se incluye con el ámbito (scope) "runtime" porque el código de tu aplicación no necesita
+        esta librería para compilar, sino que solo se requiere en el momento en que la aplicación está funcionando
+        y necesita abrir una conexión real con la base de datos.-->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- SECURITY: Fundamental para proteger la API. Se incluye para gestionar quién puede entrar (Autenticación)
+        y qué puede hacer cada uno, como que solo un ADMIN pueda borrar agrupaciones. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- SECURITY TEST: Específica para simular usuarios con roles (ADMIN/USER) durante las pruebas,
+        permitiendo testear si los bloqueos de seguridad funcionan sin tener que loguearse de verdad. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JWT (API, IMPL, JACKSON): Librerías para crear y leer "tokens" de seguridad. Se incluyen para que el usuario
+         haga login una vez y reciba un ticket (token) que lo identifique en las siguientes llamadas sin pedir contraseña. -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.5</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- VALIDATION: Sirve para poner "reglas" a los datos de entrada. Se usa para asegurar,
+         por ejemplo, que el año de una edición no esté vacío o que un email tenga el formato correcto antes de guardarlo. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
+        <!-- LOMBOK: Su finalidad es la limpieza del código. Evita que tus clases se llenen de cientos de líneas de
+        Getters, Setters y Constructores repetitivos, generándolos automáticamente con anotaciones. -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- DEVTOOLS: Herramienta de productividad. Se incluye para que el servidor se reinicie solo al detectar
+        cambios en el código, ahorrando el tiempo de tener que darle a "Stop" y "Play" constantemente. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- MAIL STARTER: Proporciona la infraestructura para conectar con servidores SMTP (como Gmail)
+        y enviar correos de bienvenida o recuperación de contraseñas a los usuarios. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- H2 DATABASE: Es una base de datos "de juguete" que vive solo en la memoria RAM.
+        Se incluye para que los tests sean ultra rápidos y no ensucien la base de datos real de MySql. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- MAVEN PLUGIN: Se encarga de transformar el código en un único archivo .jar que contiene
+             lo necesario para ejecutarse en cualquier servidor con un solo comando. -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+                <!-- Ejecución build-info para generar BuildProperties -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--  RESOURCES PLUGIN: Garantiza que los archivos de configuración (como application.properties)
+             se procesen siempre bajo el estándar UTF-8, evitando errores de lectura de caracteres. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version> <configuration>
+                <encoding>UTF-8</encoding>
+            </configuration>
+            </plugin>
+            <plugin>
+             <groupId>org.jacoco</groupId>
+             <artifactId>jacoco-maven-plugin</artifactId>
+             <version>0.8.11</version>
+             <executions>
+                 <execution>
+                     <goals>
+                         <goal>prepare-agent</goal>
+                     </goals>
+                 </execution>
+                 <execution>
+                     <id>report</id>
+                     <phase>test</phase>
+                     <goals>
+                         <goal>report</goal>
+                     </goals>
+                 </execution>
+             </executions>
+         </plugin>
+        </plugins>
+    </build>
+    <distributionManagement>
     	<repository>
-        	<id>github</id>
-        	<name>GitHub Packages</name>
-        	<url>https://maven.pkg.github.com/DanielGavilanCardenas/carnavawikiappback</url>
+        	    <id>github</id>
+        	    <name>GitHub Packages</name>
+        	    <url>https://maven.pkg.github.com/DanielGavilanCardenas/carnavawikiappback</url>
     	</repository>
-	</distributionManagement>
-</project>
+    </distributionManagement>
 
+</project>
