@@ -1,35 +1,63 @@
-name: Remove Snapshot on Merge
+name: Full Release Cycle
 
 on:
   push:
     branches:
-      - master  # Se activa cuando hay un push (o merge) a master
+      - master
 
 jobs:
-  update-version:
+  release-and-bump:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # Necesario para ver el historial de tags
 
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17' # Cambia a tu versión de Java
+          java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Remove SNAPSHOT version
+      - name: 1. Remove SNAPSHOT and Get Version
+        id: prep
         run: |
-          # Usa el plugin de ayuda de Maven para quitar el snapshot
           mvn versions:set -DremoveSnapshot
+          CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           
-      - name: Commit and Push changes
+      - name: 2. Build and Package
+        run: mvn clean package -DskipTests
+
+      - name: 3. Commit Release Version and Tag
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add pom.xml
-          git commit -m "chore: remove -SNAPSHOT for release"
-          git push
+          git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }}"
+          # Creamos el tag localmente
+          git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
+          git push origin master --tags
+
+      - name: 4. Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.prep.outputs.RELEASE_VERSION }}
+          name: Release v${{ steps.prep.outputs.RELEASE_VERSION }}
+          files: target/*.jar
+          generate_release_notes: true
+
+      - name: 5. Bump to Next SNAPSHOT
+        run: |
+          # Incrementa la versión (ej: 1.0.0 -> 1.0.1-SNAPSHOT)
+          mvn versions:set -DnextSnapshot=true
+          NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          
+          git add pom.xml
+          git commit -m "chore: bump to next development version $NEXT_VERSION [skip ci]"
+          git push origin master
