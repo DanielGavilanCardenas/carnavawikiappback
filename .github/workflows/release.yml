@@ -27,7 +27,8 @@ jobs:
       - name: 1. Remove SNAPSHOT and Get Version
         id: prep
         run: |
-          mvn versions:set -DremoveSnapshot
+          # Usamos -DgenerateBackupPoms=false para evitar archivos temporales .versionsBackup
+          mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           
@@ -38,10 +39,19 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add pom.xml
-          git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }}"
-          git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
-          git push origin master --tags
+          
+          # Verificamos si hay cambios reales en el pom.xml
+          if [[ -n "$(git status --porcelain pom.xml)" ]]; then
+            git add pom.xml
+            git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }}"
+            git push origin master
+          else
+            echo "La versión ya estaba limpia en master, no se requiere commit."
+          fi
+          
+          # El tag se intenta crear siempre. Si ya existe, no detiene el flujo.
+          git tag v${{ steps.prep.outputs.RELEASE_VERSION }} || echo "El tag ya existe"
+          git push origin --tags
 
       - name: 4. Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -53,14 +63,16 @@ jobs:
 
       - name: 5. Bump to Next SNAPSHOT on Develop
         run: |
-          # Traer la rama develop y crear el track local
           git fetch origin develop
           git checkout develop || git checkout -b develop origin/develop
           
-          # Incrementamos la versión
-          mvn versions:set -DnextSnapshot=true
+          mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           
-          git add pom.xml
-          git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
-          git push origin develop
+          if [[ -n "$(git status --porcelain pom.xml)" ]]; then
+            git add pom.xml
+            git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
+            git push origin develop
+          else
+            echo "Develop ya tiene la versión snapshot correcta."
+          fi
