@@ -1,4 +1,4 @@
-name: Full Release Cycle (Packages)
+name: Full Release Cycle (Quality First)
 
 on:
   push:
@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write # Permiso vital para subir a GitHub Packages
+      packages: write
+      pull-requests: write # Necesario para el reporte de cobertura
     
     steps:
       - name: Checkout code
@@ -24,10 +25,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          # Esto configura el archivo settings.xml automáticamente
           server-id: github 
           settings-path: ${{ github.workspace }} 
 
+      # PASO 0: VALIDACIÓN DE CALIDAD
+      - name: 0. Run Tests and Verify Coverage
+        run: mvn clean verify
+
+      - name: 0b. Check Coverage Thresholds
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 60
+          min-coverage-changed-files: 80
+          title: "Calidad de Código para Release"
+          update-comment: true
+
+      # PASO 1 EN ADELANTE: Solo si lo anterior fue exitoso
       - name: 1. Remove SNAPSHOT and Get Version
         id: prep
         run: |
@@ -35,8 +50,8 @@ jobs:
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           
-      - name: 2. Build and Package
-        run: mvn clean package -DskipTests
+      - name: 2. Build and Package (Final)
+        run: mvn package -DskipTests # Ya pasamos los tests en el paso 0
 
       - name: 3. Publish to GitHub Packages
         run: mvn deploy -DskipTests -s ${{ github.workspace }}/settings.xml
