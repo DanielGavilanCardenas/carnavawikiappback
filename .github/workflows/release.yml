@@ -53,8 +53,9 @@ jobs:
 
       - name: 5. Bump to Next SNAPSHOT on Develop
         run: |
-          # Cambiamos a la rama develop
-          git checkout develop
+          # Traer la rama develop y crear el track local
+          git fetch origin develop
+          git checkout develop || git checkout -b develop origin/develop
           
           # Incrementamos la versión
           mvn versions:set -DnextSnapshot=true
