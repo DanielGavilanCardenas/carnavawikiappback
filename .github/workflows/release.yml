@@ -1,4 +1,4 @@
-name: Full Release Cycle
+name: Full Release Cycle (Master Clean)
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necesario para ver el historial de tags
+          fetch-depth: 0 
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -34,13 +34,12 @@ jobs:
       - name: 2. Build and Package
         run: mvn clean package -DskipTests
 
-      - name: 3. Commit Release Version and Tag
+      - name: 3. Commit Release Version to Master
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add pom.xml
           git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }}"
-          # Creamos el tag localmente
           git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
           git push origin master --tags
 
@@ -52,12 +51,15 @@ jobs:
           files: target/*.jar
           generate_release_notes: true
 
-      - name: 5. Bump to Next SNAPSHOT
+      - name: 5. Bump to Next SNAPSHOT on Develop
         run: |
-          # Incrementa la versión (ej: 1.0.0 -> 1.0.1-SNAPSHOT)
+          # Cambiamos a la rama develop
+          git checkout develop
+          
+          # Incrementamos la versión
           mvn versions:set -DnextSnapshot=true
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           
           git add pom.xml
-          git commit -m "chore: bump to next development version $NEXT_VERSION [skip ci]"
-          git push origin master
+          git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
+          git push origin develop
