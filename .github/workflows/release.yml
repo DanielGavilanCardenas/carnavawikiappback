@@ -35,6 +35,7 @@ jobs:
 
       - name: 0b. Check Coverage Thresholds
         uses: madrapps/jacoco-report@v1.7.1
+        if: always()
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
