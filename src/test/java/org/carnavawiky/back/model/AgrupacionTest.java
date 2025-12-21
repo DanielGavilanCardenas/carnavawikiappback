@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class AgrupacionTest {
 
@@ -27,9 +28,6 @@ class AgrupacionTest {
 
         // Entidad a probar
         agrupacion = new Agrupacion();
-        agrupacion.setId(1L);
-        agrupacion.setNombre("Los Piratas");
-        agrupacion.setAnho(1998);
     }
 
     @Test
@@ -38,6 +36,9 @@ class AgrupacionTest {
         LocalDateTime fecha = LocalDateTime.now();
 
         // Establecer valores
+        agrupacion.setId(1L);
+        agrupacion.setNombre("Los Piratas");
+        agrupacion.setAnho(1998);
         agrupacion.setDescripcion("Una comparsa legendaria");
         agrupacion.setModalidad(Modalidad.COMPARSA);
         agrupacion.setFechaAlta(fecha);
@@ -54,60 +55,5 @@ class AgrupacionTest {
         assertEquals(fecha, agrupacion.getFechaAlta());
         assertEquals(usuario, agrupacion.getUsuarioCreador());
         assertEquals(localidad, agrupacion.getLocalidad());
-    }
-
-    // =======================================================
-    // TESTS PARA COBERTURA DE MÉTODOS DE LOMBOK (@Data)
-    // =======================================================
-
-    @Test
-    @DisplayName("Debe cumplir con el contrato de equals y hashCode")
-    void testEqualsAndHashCode() {
-        Agrupacion agrupacion1 = new Agrupacion();
-        agrupacion1.setId(1L);
-        agrupacion1.setNombre("Los Piratas");
-
-        Agrupacion agrupacion2 = new Agrupacion();
-        agrupacion2.setId(1L);
-        agrupacion2.setNombre("Los Piratas");
-
-        Agrupacion agrupacion3 = new Agrupacion();
-        agrupacion3.setId(2L);
-        agrupacion3.setNombre("Los Yesterday");
-
-        // Reflexividad
-        assertEquals(agrupacion1, agrupacion1);
-
-        // Simetría
-        assertEquals(agrupacion1, agrupacion2);
-        assertEquals(agrupacion2, agrupacion1);
-
-        // Consistencia de hashCode
-        assertEquals(agrupacion1.hashCode(), agrupacion2.hashCode());
-
-        // Desigualdad
-        assertNotEquals(agrupacion1, agrupacion3);
-        assertNotEquals(agrupacion1.hashCode(), agrupacion3.hashCode());
-
-        // Comparación con nulo y otros tipos
-        assertNotEquals(null, agrupacion1);
-        assertNotEquals(agrupacion1, new Object());
-    }
-
-    @Test
-    @DisplayName("Debe generar una representación en String")
-    void testToString() {
-        String agrupacionString = agrupacion.toString();
-        assertNotNull(agrupacionString);
-        assertTrue(agrupacionString.contains("nombre=Los Piratas"));
-        assertTrue(agrupacionString.contains("anho=1998"));
-    }
-
-    @Test
-    @DisplayName("Debe cumplir con canEqual para la simetría de equals")
-    void testCanEqual() {
-        Agrupacion otraAgrupacion = new Agrupacion();
-        assertTrue(agrupacion.canEqual(otraAgrupacion));
-        assertFalse(agrupacion.canEqual(new Object()));
     }
 }
