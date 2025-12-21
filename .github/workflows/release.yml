@@ -84,19 +84,20 @@ jobs:
           path: target/*.jar
           retention-days: 7
 
-      - name: 5. Commit Release Version to Master
+      - name: 5. Tag Release Version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ -n "$(git status --porcelain pom.xml)" ]]; then
-            git add pom.xml
-            git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }}"
-            git push origin master
-          fi
-          git tag v${{ steps.prep.outputs.RELEASE_VERSION }} || echo "Tag exists"
-          git push origin --tags
+          
+          # NO hacemos commit en master para no violar la protección de rama.
+          # Solo creamos el tag sobre el commit que acaba de entrar por el merge.
+          echo "Creando tag v${{ steps.prep.outputs.RELEASE_VERSION }}"
+          git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
+          git push origin v${{ steps.prep.outputs.RELEASE_VERSION }}
 
       - name: 6. Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.prep.outputs.RELEASE_VERSION }}
@@ -111,6 +112,7 @@ jobs:
           git checkout develop
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          
           if [[ -n "$(git status --porcelain pom.xml)" ]]; then
             git add pom.xml
             git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
