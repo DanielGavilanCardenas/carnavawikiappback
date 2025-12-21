@@ -118,6 +118,7 @@ class UsuarioTest {
         Usuario usuario2 = new Usuario();
         usuario2.setId(1L);
         usuario2.setUsername("user1");
+        usuario2.setFechaAlta(usuario1.getFechaAlta());
 
         Usuario usuario3 = new Usuario();
         usuario3.setId(2L);
