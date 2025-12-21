@@ -103,4 +103,60 @@ class UsuarioTest {
         assertTrue(nuevoUsuario.getFechaAlta().isAfter(LocalDateTime.now().minusSeconds(1)));
         assertTrue(nuevoUsuario.getFechaAlta().isBefore(LocalDateTime.now().plusSeconds(1)));
     }
+
+    // =======================================================
+    // TESTS PARA COBERTURA DE MÉTODOS DE LOMBOK (@Data)
+    // =======================================================
+
+    @Test
+    @DisplayName("Debe cumplir con el contrato de equals y hashCode")
+    void testEqualsAndHashCode() {
+        Usuario usuario1 = new Usuario();
+        usuario1.setId(1L);
+        usuario1.setUsername("user1");
+
+        Usuario usuario2 = new Usuario();
+        usuario2.setId(1L);
+        usuario2.setUsername("user1");
+
+        Usuario usuario3 = new Usuario();
+        usuario3.setId(2L);
+        usuario3.setUsername("user2");
+
+        // Reflexividad
+        assertEquals(usuario1, usuario1);
+
+        // Simetría
+        assertEquals(usuario1, usuario2);
+        assertEquals(usuario2, usuario1);
+
+        // Consistencia de hashCode
+        assertEquals(usuario1.hashCode(), usuario2.hashCode());
+
+        // Desigualdad
+        assertNotEquals(usuario1, usuario3);
+        assertNotEquals(usuario1.hashCode(), usuario3.hashCode());
+
+        // Comparación con nulo y otros tipos
+        assertNotEquals(null, usuario1);
+        assertNotEquals(usuario1, new Object());
+    }
+
+    @Test
+    @DisplayName("Debe generar una representación en String")
+    void testToString() {
+        String usuarioString = usuario.toString();
+        assertNotNull(usuarioString);
+        assertTrue(usuarioString.contains("username=testuser"));
+        assertTrue(usuarioString.contains("email=test@example.com"));
+    }
+
+    @Test
+    @DisplayName("Debe cumplir con canEqual para la simetría de equals")
+    void testCanEqual() {
+        Usuario otroUsuario = new Usuario();
+        // El método canEqual es usado internamente por equals para asegurar que el objeto comparado es una instancia de Usuario
+        assertTrue(usuario.canEqual(otroUsuario));
+        assertFalse(usuario.canEqual(new Object()));
+    }
 }
