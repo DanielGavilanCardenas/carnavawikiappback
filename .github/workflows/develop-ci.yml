@@ -1,0 +1,79 @@
+name: Develop Quality Check
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: write
+      checks: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # PASO 0: VALIDACIÓN DE CALIDAD (Usando tu script con porcentaje en log)
+      - name: 0. Run Tests and Verify Coverage
+        run: |
+          mvn clean verify || MAVEN_FAILED=true
+          
+          if [ -f target/site/jacoco/jacoco.csv ]; then
+            COVERAGE=$(awk -F, 'NR > 1 { missed += $4; covered += $5 } END { if (missed + covered > 0) print int((covered / (missed + covered)) * 100); else print 0 }' target/site/jacoco/jacoco.csv)
+            echo "::notice::📊 Cobertura en Develop: $COVERAGE%"
+          fi
+
+          if [ "$MAVEN_FAILED" = true ]; then
+            echo "::error::❌ FALLO DE CALIDAD: Cobertura insuficiente o tests fallidos en develop."
+            exit 1
+          fi
+
+      # Publica el reporte en el Summary y como comentario si es un PR
+      - name: 0b. Check Coverage Thresholds
+        uses: madrapps/jacoco-report@v1.7.1
+        if: always()
+        with:
+          paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 50
+          min-coverage-changed-files: 50
+          title: "Reporte de Cobertura - Rama Develop"
+          update-comment: true
+          continue-on-error: false
+
+      # Sube el reporte HTML para revisión manual
+      - name: 0c. Upload Coverage HTML Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-develop
+          path: target/site/jacoco/
+          retention-days: 3
+
+      # Sube el JAR resultante (útil para pruebas rápidas sin ser release)
+      - name: 1. Build and Upload Dev Artifact
+        if: success()
+        run: mvn package -DskipTests
+        
+      - name: 2. Upload JAR Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dev-snapshot
+          path: target/*.jar
+          retention-days: 3
