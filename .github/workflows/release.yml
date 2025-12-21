@@ -1,7 +1,10 @@
-name: Full Release Cycle (Quality First)
+name: Full Release Cycle & Quality Gate
 
 on:
   push:
+    branches:
+      - master
+  pull_request: # <--- Ahora también valida antes de mergear
     branches:
       - master
 
@@ -11,8 +14,8 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write # Necesario para el reporte de cobertura
-      checks: write
+      pull-requests: write # Necesario para comentar en el PR
+      checks: write        # Necesario para el resumen visual
     
     steps:
       - name: Checkout code
@@ -31,39 +34,45 @@ jobs:
 
       # PASO 0: VALIDACIÓN DE CALIDAD
       - name: 0. Run Tests and Verify Coverage
-        run: mvn clean verify
+        run: |
+          mvn clean verify || MAVEN_FAILED=true
+          
+          if [ -f target/site/jacoco/jacoco.csv ]; then
+            COVERAGE=$(awk -F, 'NR > 1 { missed += $4; covered += $5 } END { if (missed + covered > 0) print int((covered / (missed + covered)) * 100); else print 0 }' target/site/jacoco/jacoco.csv)
+            echo "::notice::📊 Cobertura actual detectada: $COVERAGE%"
+          fi
 
-      - name: 0b. Check Coverage Thresholds
+          if [ "$MAVEN_FAILED" = true ]; then
+            echo "::error::❌ ERROR DE CALIDAD: Cobertura insuficiente ($COVERAGE%) o tests fallidos. Se requiere un mínimo de 60%."
+            exit 1
+          fi
+
+      - name: 0b. Post Coverage Comment
         uses: madrapps/jacoco-report@v1.7.1
-        if: always()
+        if: always() # Siempre lo ponemos para ver por qué falló
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 60
           min-coverage-changed-files: 80
-          title: "Calidad de Código para Release"
+          title: "Reporte de Cobertura"
           update-comment: true
-          continue-on-error: false
 
-      - name: 0c. Upload Coverage HTML
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report-html
-          path: target/site/jacoco/
-
-      # PASO 1 EN ADELANTE: Solo si lo anterior fue exitoso
+      # PASOS DE RELEASE (Solo se ejecutan si es PUSH en MASTER y los tests pasaron)
       - name: 1. Remove SNAPSHOT and Get Version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         id: prep
         run: |
           mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           
-      - name: 2. Build and Package (Final)
-        run: mvn package -DskipTests # Ya pasamos los tests en el paso 0
+      - name: 2. Build and Package
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: mvn package -DskipTests
 
       - name: 3. Publish to GitHub Packages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: mvn deploy -DskipTests -s ${{ github.workspace }}/settings.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
