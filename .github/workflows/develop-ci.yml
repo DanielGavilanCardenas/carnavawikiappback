@@ -65,34 +65,15 @@ jobs:
           path: target/site/jacoco/
           retention-days: 3
 
-      # ... (Pasos anteriores igual hasta el 0c) ...
-
-      # Sube el JAR resultante (SNAPSHOT)
-      - name: 1. Build and Package Dev
+      # Sube el JAR resultante (útil para pruebas rápidas sin ser release)
+      - name: 1. Build and Upload Dev Artifact
         if: success()
-        run: |
-          # Extraemos nombre y versión del pom.xml
-          PROJECT_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-          PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          
-          # Nos aseguramos de que la versión tenga -SNAPSHOT antes de empaquetar
-          if [[ ! $PROJECT_VERSION == *"-SNAPSHOT" ]]; then
-            echo "Añadiendo sufijo -SNAPSHOT a la versión..."
-            mvn versions:set -DnewVersion="${PROJECT_VERSION}-SNAPSHOT" -DgenerateBackupPoms=false
-            PROJECT_VERSION="${PROJECT_VERSION}-SNAPSHOT"
-          fi
-          
-          # Guardamos las variables en el GITHUB_ENV para usarlas en el siguiente paso
-          echo "ARTIFACT_ID=$PROJECT_ARTIFACTID" >> $GITHUB_ENV
-          echo "VERSION=$PROJECT_VERSION" >> $GITHUB_ENV
-          
-          mvn package -DskipTests
-
+        run: mvn package -DskipTests
+        
       - name: 2. Upload JAR Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          # Usamos las variables extraídas para nombrar el artefacto dinámicamente
-          name: ${{ env.ARTIFACT_ID }}-${{ env.VERSION }}
+          name: app-dev-snapshot
           path: target/*.jar
           retention-days: 3
