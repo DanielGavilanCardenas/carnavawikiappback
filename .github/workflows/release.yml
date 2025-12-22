@@ -110,14 +110,12 @@ jobs:
         run: |
           git fetch origin develop
           git checkout develop
-          
-          # Aquí sí modificamos el POM porque en develop ya pusimos "Allow force push"
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           
           if [[ -n "$(git status --porcelain pom.xml)" ]]; then
             git add pom.xml
             git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
-            # El --force es clave si develop tiene reglas de protección
-            git push origin develop --force
+            # Usamos --force para saltar la restricción si el bot tiene permiso
+            git push origin develop --force 
           fi
