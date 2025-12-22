@@ -90,11 +90,19 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # NO hacemos commit en master para no violar la protección de rama.
-          # Solo creamos el tag sobre el commit que acaba de entrar por el merge.
-          echo "Creando tag v${{ steps.prep.outputs.RELEASE_VERSION }}"
-          git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
-          git push origin v${{ steps.prep.outputs.RELEASE_VERSION }}
+          TAG_NAME="v${{ steps.prep.outputs.RELEASE_VERSION }}"
+          
+          # 1. Borrar el tag local si existe
+          git tag -d $TAG_NAME || echo "El tag local no existía"
+          
+          # 2. Borrar el tag en el servidor (GitHub) si existe
+          # Esto evita el error 'already exists' al hacer el push
+          git push origin :refs/tags/$TAG_NAME || echo "El tag no existía en el remoto"
+          
+          # 3. Crear el tag de nuevo con el commit actual
+          echo "Creando tag $TAG_NAME"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
 
       - name: 6. Create GitHub Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
