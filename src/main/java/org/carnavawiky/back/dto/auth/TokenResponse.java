@@ -9,6 +9,7 @@ public class TokenResponse {
 
     private String accessToken;
     private String refreshToken;
+    @Builder.Default
     private String tokenType = "Bearer";
     private Long expiresIn; // Tiempo de expiración del accessToken en segundos
 }
