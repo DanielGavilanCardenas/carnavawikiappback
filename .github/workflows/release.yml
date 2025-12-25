@@ -32,18 +32,15 @@ jobs:
           server-id: github
           settings-path: ${{ github.workspace }}
 
-      # PASO 0: VALIDACIÓN DE CALIDAD
+      # PASO 0: VALIDACIÓN DE CALIDAD (Se ejecuta siempre)
       - name: 0. Run Tests and Verify Coverage
         run: |
           mvn clean verify || MAVEN_FAILED=true
-          
           if [ -f target/site/jacoco/jacoco.csv ]; then
             COVERAGE=$(awk -F, 'NR > 1 { missed += $4; covered += $5 } END { if (missed + covered > 0) print int((covered / (missed + covered)) * 100); else print 0 }' target/site/jacoco/jacoco.csv)
-            echo "::notice::📊 Cobertura actual detectada: $COVERAGE%"
+            echo "::notice::📊 Cobertura actual: $COVERAGE%"
           fi
-
           if [ "$MAVEN_FAILED" = true ]; then
-            echo "::error::❌ ERROR DE CALIDAD: Cobertura insuficiente ($COVERAGE%) o tests fallidos. Se requiere un mínimo de 60%."
             exit 1
           fi
 
@@ -61,6 +58,8 @@ jobs:
       # PASO 1: PREPARACIÓN DE METADATOS (Extracción de ArtifactId y Versión)
       - name: 1. Prepare Metadata and Version
         id: prep
+        # Forzamos la detección del push a master para desbloquear el resto de pasos
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           # Extraemos el ArtifactId directamente del pom.xml
           PROJECT_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
@@ -77,12 +76,15 @@ jobs:
 
       # PASOS DE CONSTRUCCIÓN Y PUBLICACIÓN (Solo en Master)
       - name: 2. Build and Package
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: steps.prep.outcome == 'success'
         run: mvn package -DskipTests
 
+      # PASO 3: PUBLICACIÓN (Este paso crea el Package 0.0.5)
       - name: 3. Publish to GitHub Packages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: mvn deploy -DskipTests -s ${{ github.workspace }}/settings.xml
+        if: steps.prep.outcome == 'success'
+        run: |
+          # Usamos el settings.xml generado por setup-java
+          mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -96,8 +98,9 @@ jobs:
           path: target/*.jar
           retention-days: 7
 
+      # PASO 5: TAGS (Resiliente para evitar error 128)
       - name: 5. Tag Release Version
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: steps.prep.outcome == 'success'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -109,8 +112,9 @@ jobs:
           git push origin :refs/tags/$TAG_NAME || echo "Tag no existía en remoto"
           git push origin $TAG_NAME
 
+      # PASO 6: RELEASE
       - name: 6. Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: steps.prep.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.prep.outputs.RELEASE_VERSION }}
@@ -118,14 +122,14 @@ jobs:
           files: target/*.jar
           generate_release_notes: true
 
+      # PASO 7: BUMP VERSIÓN EN DEVELOP
       - name: 7. Bump to Next SNAPSHOT on Develop
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: steps.prep.outcome == 'success'
         run: |
           git fetch origin develop
           git checkout develop
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          
           if [[ -n "$(git status --porcelain pom.xml)" ]]; then
             git add pom.xml
             git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
