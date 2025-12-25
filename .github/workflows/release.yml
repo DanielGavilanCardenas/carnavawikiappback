@@ -82,7 +82,9 @@ jobs:
 
       - name: 3. Publish to GitHub Packages
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: mvn deploy -DskipTests -s ${{ github.workspace }}/settings.xml
+        run: |
+          # Usamos el settings.xml que está en la raíz del proyecto
+          mvn deploy -s settings.xml -DskipTests -U
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
