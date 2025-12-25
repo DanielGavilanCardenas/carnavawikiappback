@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -29,8 +29,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          server-id: github 
-          settings-path: ${{ github.workspace }} 
+          server-id: github
+          settings-path: ${{ github.workspace }}
 
       # PASO 0: VALIDACIÓN DE CALIDAD
       - name: 0. Run Tests and Verify Coverage
@@ -49,7 +49,7 @@ jobs:
 
       - name: 0b. Post Coverage Comment
         uses: madrapps/jacoco-report@v1.7.1
-        if: always() # Siempre lo ponemos para ver por qué falló
+        if: always()
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
           
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          
+
       - name: 2. Build and Package
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: mvn package -DskipTests
@@ -99,19 +99,11 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          TAG_NAME="v${{ steps.prep.outputs.RELEASE_VERSION }}"
-          
-          echo "Gestionando tag $TAG_NAME"
-          
-          # 1. Crear (o sobrescribir) el tag localmente de forma forzada
-          git tag -f $TAG_NAME
-          
-          # 2. Eliminar el tag en el servidor (GitHub) por si acaso ya existía
-          # El formato :refs/tags/nombre le dice a GitHub que borre esa referencia
-          git push origin :refs/tags/$TAG_NAME || echo "El tag no estaba en el remoto, procediendo..."
-          
-          # 3. Subir el nuevo tag
-          git push origin $TAG_NAME
+          # NO hacemos commit en master para no violar la protección de rama.
+          # Solo creamos el tag sobre el commit que acaba de entrar por el merge.
+          echo "Creando tag v${{ steps.prep.outputs.RELEASE_VERSION }}"
+          git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
+          git push origin v${{ steps.prep.outputs.RELEASE_VERSION }}
 
       - name: 6. Create GitHub Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
