@@ -50,8 +50,8 @@ jobs:
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 50
-          min-coverage-changed-files: 50
+          min-coverage-overall: 80
+          min-coverage-changed-files: 80
           title: "Reporte de Cobertura - Rama Develop"
           update-comment: true
           continue-on-error: false
