@@ -49,7 +49,7 @@ jobs:
 
       - name: 0b. Post Coverage Comment
         uses: madrapps/jacoco-report@v1.7.1
-        if: always()
+        if: always() # Siempre lo ponemos para ver por qué falló
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -58,19 +58,12 @@ jobs:
           title: "Reporte de Cobertura"
           update-comment: true
 
-      # 1. Obtenemos metadatos y preparamos versión (Se ejecuta siempre para que el Paso 4 tenga datos)
-      - name: 1. Prepare Release Version
+      # PASOS DE RELEASE (Solo se ejecutan si es PUSH en MASTER y los tests pasaron)
+      - name: 1. Remove SNAPSHOT and Get Version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         id: prep
         run: |
-          # Extraemos el artifactId del pom.xml
-          PROJECT_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-          echo "ARTIFACT_ID=$PROJECT_ARTIFACTID" >> $GITHUB_OUTPUT
-          
-          # Si es master, quitamos el SNAPSHOT, si no, usamos la versión tal cual
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/master" ]]; then
-            mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
-          fi
-          
+          mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
@@ -84,12 +77,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 4. Upload JAR to Artifacts (Ahora con nombre dinámico correcto)
       - name: 4. Upload JAR to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          # Resultado esperado: carnavawikiappback-0.0.5
-          name: ${{ steps.prep.outputs.ARTIFACT_ID }}-${{ steps.prep.outputs.RELEASE_VERSION }}
+          name: app-release-${{ steps.prep.outputs.RELEASE_VERSION }}
           path: target/*.jar
           retention-days: 7
 
