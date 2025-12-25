@@ -1,112 +1,155 @@
 package org.carnavawiky.back.model;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class PersonaTest {
 
-    @Test
-    void testNoArgsConstructorAndSetters() {
-        Persona persona = new Persona();
-        Long id = 1L;
-        String nombreReal = "Juan Pérez";
-        String apodo = "El Juani";
-        Localidad localidad = new Localidad(1L, "Cádiz");
-        Usuario usuario = new Usuario();
-        usuario.setId(10L);
+    private Persona persona;
+    private Localidad localidad;
+    private Usuario usuario;
 
-        persona.setId(id);
-        persona.setNombreReal(nombreReal);
-        persona.setApodo(apodo);
+    @BeforeEach
+    void setUp() {
+        localidad = new Localidad(1L, "Cádiz");
+        usuario = new Usuario();
+        usuario.setId(10L);
+        usuario.setUsername("juancarlos");
+
+        persona = new Persona();
+        persona.setId(1L);
+        persona.setNombreReal("Juan Carlos Aragón Becerra");
+        persona.setApodo("El Capitán Veneno");
         persona.setOrigen(localidad);
         persona.setUsuario(usuario);
+    }
 
-        assertEquals(id, persona.getId());
-        assertEquals(nombreReal, persona.getNombreReal());
-        assertEquals(apodo, persona.getApodo());
+    @Test
+    @DisplayName("Debe establecer y recuperar todos los campos correctamente")
+    void testGettersAndSetters() {
+        assertNotNull(persona);
+        assertEquals(1L, persona.getId());
+        assertEquals("Juan Carlos Aragón Becerra", persona.getNombreReal());
+        assertEquals("El Capitán Veneno", persona.getApodo());
         assertEquals(localidad, persona.getOrigen());
         assertEquals(usuario, persona.getUsuario());
     }
 
     @Test
+    @DisplayName("Debe funcionar el constructor con todos los argumentos")
     void testAllArgsConstructor() {
-        Long id = 1L;
-        String nombreReal = "Juan Pérez";
-        String apodo = "El Juani";
-        Localidad localidad = new Localidad(1L, "Cádiz");
-        Usuario usuario = new Usuario();
-        usuario.setId(10L);
-
-        Persona persona = new Persona(id, nombreReal, apodo, localidad, usuario);
-
-        assertEquals(id, persona.getId());
-        assertEquals(nombreReal, persona.getNombreReal());
-        assertEquals(apodo, persona.getApodo());
-        assertEquals(localidad, persona.getOrigen());
-        assertEquals(usuario, persona.getUsuario());
+        Persona p = new Persona(2L, "Antonio", "Ares", localidad, usuario);
+        
+        assertEquals(2L, p.getId());
+        assertEquals("Antonio", p.getNombreReal());
+        assertEquals("Ares", p.getApodo());
+        assertEquals(localidad, p.getOrigen());
+        assertEquals(usuario, p.getUsuario());
     }
 
+    // =======================================================
+    // TESTS PARA COBERTURA DE MÉTODOS DE LOMBOK (@Data)
+    // =======================================================
+
     @Test
-    void testEqualsAndHashCode() {
-        Localidad localidad1 = new Localidad(1L, "Cádiz");
-        Usuario usuario1 = new Usuario();
-        usuario1.setId(1L);
+    @DisplayName("Debe cubrir todas las ramas de equals y hashCode variando cada campo")
+    void testEqualsAndHashCode_Exhaustivo() {
+        // 1. Preparación de objetos base
+        Localidad loc1 = new Localidad(1L, "Cádiz");
+        Localidad loc2 = new Localidad(2L, "Sevilla");
+        Usuario user1 = new Usuario(); user1.setId(1L);
+        Usuario user2 = new Usuario(); user2.setId(2L);
 
-        Persona p1 = new Persona(1L, "Juan", "Juani", localidad1, usuario1);
-        Persona p2 = new Persona(1L, "Juan", "Juani", localidad1, usuario1);
+        Persona p1 = new Persona(1L, "Nombre", "Apodo", loc1, user1);
+        Persona p2 = new Persona(1L, "Nombre", "Apodo", loc1, user1);
 
-        // Test igualdad básica
-        assertEquals(p1, p2);
-        assertEquals(p1.hashCode(), p2.hashCode());
+        // --- IGUALDAD BÁSICA ---
         assertEquals(p1, p1); // Reflexivo
+        assertEquals(p1, p2); // Simétrico
+        assertEquals(p2, p1);
+        assertEquals(p1.hashCode(), p2.hashCode()); // HashCode consistente
 
-        // Test desigualdad con null y otro tipo
-        assertNotEquals(null, p1);
-        assertNotEquals("String", p1);
+        assertNotEquals(p1, null); // No igual a null
+        assertNotEquals(p1, new Object()); // No igual a otro tipo
 
-        // Test desigualdad por campos individuales
-        Persona p3 = new Persona(2L, "Juan", "Juani", localidad1, usuario1); // ID diferente
-        assertNotEquals(p1, p3);
+        // --- VARIACIONES CAMPO A CAMPO (Orden probable: id, nombreReal, apodo, origen, usuario) ---
 
-        p3 = new Persona(1L, "Pedro", "Juani", localidad1, usuario1); // Nombre diferente
-        assertNotEquals(p1, p3);
+        // 1. ID Diferente
+        Persona pDiffId = new Persona(2L, "Nombre", "Apodo", loc1, user1);
+        assertNotEquals(p1, pDiffId);
+        assertNotEquals(p1.hashCode(), pDiffId.hashCode());
 
-        p3 = new Persona(1L, "Juan", "Perico", localidad1, usuario1); // Apodo diferente
-        assertNotEquals(p1, p3);
+        // 2. ID Null vs No Null
+        Persona pIdNull = new Persona(null, "Nombre", "Apodo", loc1, user1);
+        assertNotEquals(p1, pIdNull);
+        assertNotEquals(pIdNull, p1);
 
-        Localidad localidad2 = new Localidad(2L, "Sevilla");
-        p3 = new Persona(1L, "Juan", "Juani", localidad2, usuario1); // Localidad diferente
-        assertNotEquals(p1, p3);
+        // 3. NombreReal Diferente
+        Persona pDiffNombre = new Persona(1L, "Otro", "Apodo", loc1, user1);
+        assertNotEquals(p1, pDiffNombre);
+        assertNotEquals(p1.hashCode(), pDiffNombre.hashCode());
 
-        Usuario usuario2 = new Usuario();
-        usuario2.setId(2L);
-        p3 = new Persona(1L, "Juan", "Juani", localidad1, usuario2); // Usuario diferente
-        assertNotEquals(p1, p3);
+        // 4. NombreReal Null vs No Null
+        Persona pNombreNull = new Persona(1L, null, "Apodo", loc1, user1);
+        assertNotEquals(p1, pNombreNull);
+        assertNotEquals(pNombreNull, p1);
+
+        // 5. Apodo Diferente
+        Persona pDiffApodo = new Persona(1L, "Nombre", "Otro", loc1, user1);
+        assertNotEquals(p1, pDiffApodo);
+        assertNotEquals(p1.hashCode(), pDiffApodo.hashCode());
+
+        // 6. Apodo Null vs No Null
+        Persona pApodoNull = new Persona(1L, "Nombre", null, loc1, user1);
+        assertNotEquals(p1, pApodoNull);
+        assertNotEquals(pApodoNull, p1);
+        
+        // 7. Apodo Null vs Null (Deben ser iguales si el resto coincide)
+        Persona pApodoNull2 = new Persona(1L, "Nombre", null, loc1, user1);
+        assertEquals(pApodoNull, pApodoNull2);
+
+        // 8. Origen (Localidad) Diferente
+        Persona pDiffOrigen = new Persona(1L, "Nombre", "Apodo", loc2, user1);
+        assertNotEquals(p1, pDiffOrigen);
+        assertNotEquals(p1.hashCode(), pDiffOrigen.hashCode());
+
+        // 9. Origen Null vs No Null
+        Persona pOrigenNull = new Persona(1L, "Nombre", "Apodo", null, user1);
+        assertNotEquals(p1, pOrigenNull);
+        assertNotEquals(pOrigenNull, p1);
+
+        // 10. Usuario Diferente
+        Persona pDiffUsuario = new Persona(1L, "Nombre", "Apodo", loc1, user2);
+        assertNotEquals(p1, pDiffUsuario);
+        assertNotEquals(p1.hashCode(), pDiffUsuario.hashCode());
+
+        // 11. Usuario Null vs No Null
+        Persona pUsuarioNull = new Persona(1L, "Nombre", "Apodo", loc1, null);
+        assertNotEquals(p1, pUsuarioNull);
+        assertNotEquals(pUsuarioNull, p1);
+        
+        // 12. Usuario Null vs Null
+        Persona pUsuarioNull2 = new Persona(1L, "Nombre", "Apodo", loc1, null);
+        assertEquals(pUsuarioNull, pUsuarioNull2);
     }
 
     @Test
+    @DisplayName("Debe generar una representación en String")
     void testToString() {
-        Persona persona = new Persona();
-        persona.setId(1L);
-        persona.setNombreReal("Juan");
-        persona.setApodo("Juani");
-
-        String toString = persona.toString();
-
-        assertNotNull(toString);
-        assertTrue(toString.contains("Persona"));
-        assertTrue(toString.contains("id=1"));
-        assertTrue(toString.contains("nombreReal=Juan"));
-        assertTrue(toString.contains("apodo=Juani"));
+        String personaString = persona.toString();
+        assertNotNull(personaString);
+        assertTrue(personaString.contains("nombreReal=Juan Carlos Aragón Becerra"));
+        assertTrue(personaString.contains("apodo=El Capitán Veneno"));
     }
 
     @Test
+    @DisplayName("Debe cumplir con canEqual para la simetría de equals")
     void testCanEqual() {
-        Persona p1 = new Persona();
-        Persona p2 = new Persona();
-
-        assertTrue(p1.canEqual(p2));
-        assertFalse(p1.canEqual(new Object()));
+        Persona otraPersona = new Persona();
+        assertTrue(persona.canEqual(otraPersona));
+        assertFalse(persona.canEqual(new Object()));
     }
 }
