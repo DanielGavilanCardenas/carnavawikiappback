@@ -262,6 +262,19 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- MAVEN COMPILER PLUGIN: Configuración explícita para procesar anotaciones (Lombok) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <!--  RESOURCES PLUGIN: Garantiza que los archivos de configuración (como application.properties)
              se procesen siempre bajo el estándar UTF-8, evitando errores de lectura de caracteres. -->
             <plugin>
@@ -302,7 +315,7 @@
                                      <limit>
                                          <counter>INSTRUCTION</counter>
                                          <value>COVEREDRATIO</value>
-                                         <minimum>0.50</minimum>
+                                         <minimum>0.80</minimum>
                                      </limit>
                                  </limits>
                              </rule>
