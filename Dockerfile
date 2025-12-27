@@ -9,6 +9,6 @@ FROM openjdk:17-jdk-slim
 ENV PORT=8083
 EXPOSE 8083
 [!–- Copiamos el jar usando el nombre exacto de tu pom.xml -–]
-COPY --from=build /target/carnavawikiappback-0.0.7-SNAPSHOT.jar app.jar
+COPY --from=build /target/carnavawikiappback-0.0.6-SNAPSHOT.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "/app.jar"]
