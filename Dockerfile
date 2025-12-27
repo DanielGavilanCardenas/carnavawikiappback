@@ -4,7 +4,7 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # ETAPA 2: Ejecución
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jre
 # Definimos el puerto
 ENV PORT=8083
 EXPOSE 8083
