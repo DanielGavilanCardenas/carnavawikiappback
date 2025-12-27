@@ -8,7 +8,7 @@ FROM openjdk:17-jdk-slim
 [!–- EXPOSE: Informamos que la app usa el puerto 8083 definido en tu application.properties -–]
 EXPOSE 8083
 [!–- Copiamos el JAR generado desde la etapa de construcción -–]
-COPY --from=build /target/carnavawikiappback-0.0.5-SNAPSHOT.jar app.jar
+COPY --from=build /target/carnavawikiappback-0.0.6-SNAPSHOT.jar app.jar
 
 [!–- ENTRYPOINT: Comando para iniciar la aplicación -–]
 ENTRYPOINT ["java", "-jar", "/app.jar"]
