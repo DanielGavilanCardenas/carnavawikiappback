@@ -29,7 +29,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          server-id: github
+          server-id: github # Debe coincidir con el id en distributionManagement del pom.xml
           settings-path: ${{ github.workspace }}
 
       # PASO 0: VALIDACIÓN DE CALIDAD (Se ejecuta siempre)
@@ -44,37 +44,23 @@ jobs:
             exit 1
           fi
 
-      - name: 0b. Post Coverage Comment
-        uses: madrapps/jacoco-report@v1.7.1
-        if: always()
-        with:
-          paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 80
-          min-coverage-changed-files: 80
-          title: "Reporte de Cobertura"
-          update-comment: true
-
-      # PASO 1: PREPARACIÓN DE METADATOS (Extracción de ArtifactId y Versión)
+      # PASO 1: PREPARACIÓN (Detecta si es un PUSH real a master)
       - name: 1. Prepare Metadata and Version
         id: prep
         # Forzamos la detección del push a master para desbloquear el resto de pasos
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
-          # Extraemos el ArtifactId directamente del pom.xml
+          # Extraer ArtifactId dinámicamente
           PROJECT_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
           echo "ARTIFACT_ID=$PROJECT_ARTIFACTID" >> $GITHUB_OUTPUT
           
-          # Si es push en master, quitamos el SNAPSHOT para la release
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/master" ]]; then
-            mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
-          fi
+          # Quitar SNAPSHOT para generar la 0.0.5
+          mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           
-          # Obtenemos la versión final (ej: 0.0.5)
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
-      # PASOS DE CONSTRUCCIÓN Y PUBLICACIÓN (Solo en Master)
+      # PASO 2: COMPILACIÓN
       - name: 2. Build and Package
         if: steps.prep.outcome == 'success'
         run: mvn package -DskipTests
@@ -88,12 +74,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # PASO 4: SUBIDA DE ARTEFACTO (Ahora con nombre dinámico correcto)
+      # PASO 4: ARTEFACTOS DEL RUN
       - name: 4. Upload JAR to Artifacts
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: steps.prep.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          # Nombre esperado: carnavawikiappback-0.0.5
           name: ${{ steps.prep.outputs.ARTIFACT_ID }}-${{ steps.prep.outputs.RELEASE_VERSION }}
           path: target/*.jar
           retention-days: 7
@@ -104,12 +89,9 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
           TAG_NAME="v${{ steps.prep.outputs.RELEASE_VERSION }}"
-          
-          # Forzamos la creación del tag local y remoto para evitar errores de duplicados
           git tag -f $TAG_NAME
-          git push origin :refs/tags/$TAG_NAME || echo "Tag no existía en remoto"
+          git push origin :refs/tags/$TAG_NAME || echo "Tag no existía"
           git push origin $TAG_NAME
 
       # PASO 6: RELEASE
