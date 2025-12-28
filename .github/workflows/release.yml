@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  # Mantenemos pull_request solo para el Paso 0 (Validación)
   pull_request:
     branches:
       - master
@@ -22,6 +23,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Importante: Usar un token con permisos para disparar otros workflows si es necesario
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -32,7 +35,7 @@ jobs:
           server-id: github
           settings-path: ${{ github.workspace }}
 
-      # PASO 0: VALIDACIÓN DE CALIDAD
+      # PASO 0: Se ejecuta siempre (en PR y en Push)
       - name: 0. Run Tests and Verify Coverage
         run: |
           mvn clean verify || MAVEN_FAILED=true
@@ -40,24 +43,24 @@ jobs:
             COVERAGE=$(awk -F, 'NR > 1 { missed += $4; covered += $5 } END { if (missed + covered > 0) print int((covered / (missed + covered)) * 100); else print 0 }' target/site/jacoco/jacoco.csv)
             echo "::notice::📊 Cobertura actual: $COVERAGE%"
           fi
-          if [ "$MAVEN_FAILED" = true ]; then
-            exit 1
-          fi
+          if [ "$MAVEN_FAILED" = true ]; then exit 1; fi
 
-      # PASO 1: PREPARACIÓN (Simplificado para asegurar ejecución en Master)
+      # PASO 1: PREPARACIÓN
+      # Cambiamos la condición: Si estamos en la rama master, SE EJECUTA.
       - name: 1. Prepare Metadata and Version
         id: prep
-        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/master'
         run: |
           PROJECT_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
           echo "ARTIFACT_ID=$PROJECT_ARTIFACTID" >> $GITHUB_OUTPUT
           
+          # Quitar SNAPSHOT
           mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
-      # PASO 1.1: PERSISTIR VERSIÓN EN MASTER (Para que Render lo vea)
+      # PASO 1.1: Persistir la versión en Master (Para Render)
       - name: 1.1 Commit Release Version to Master
         if: steps.prep.outcome == 'success'
         run: |
@@ -72,22 +75,12 @@ jobs:
         if: steps.prep.outcome == 'success'
         run: mvn package -DskipTests
 
-      # PASO 3: PUBLICACIÓN EN GITHUB PACKAGES
+      # PASO 3: PUBLICACIÓN
       - name: 3. Publish to GitHub Packages
         if: steps.prep.outcome == 'success'
-        run: |
-          mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
+        run: mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # PASO 4: ARTEFACTOS
-      - name: 4. Upload JAR to Artifacts
-        if: steps.prep.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.prep.outputs.ARTIFACT_ID }}-${{ steps.prep.outputs.RELEASE_VERSION }}
-          path: target/*.jar
-          retention-days: 7
 
       # PASO 5: TAGS
       - name: 5. Tag Release Version
@@ -96,16 +89,6 @@ jobs:
           TAG_NAME="v${{ steps.prep.outputs.RELEASE_VERSION }}"
           git tag -f $TAG_NAME
           git push origin $TAG_NAME
-
-      # PASO 6: GITHUB RELEASE
-      - name: 6. Create GitHub Release
-        if: steps.prep.outcome == 'success'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.prep.outputs.RELEASE_VERSION }}
-          name: Release v${{ steps.prep.outputs.RELEASE_VERSION }}
-          files: target/*.jar
-          generate_release_notes: true
 
       # PASO 7: BUMP EN DEVELOP
       - name: 7. Bump to Next SNAPSHOT on Develop
