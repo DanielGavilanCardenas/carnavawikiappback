@@ -29,10 +29,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          server-id: github # Debe coincidir con el id en distributionManagement del pom.xml
+          server-id: github
           settings-path: ${{ github.workspace }}
 
-      # PASO 0: VALIDACIÓN DE CALIDAD (Se ejecuta siempre)
+      # PASO 0: VALIDACIÓN DE CALIDAD
       - name: 0. Run Tests and Verify Coverage
         run: |
           mvn clean verify || MAVEN_FAILED=true
@@ -44,23 +44,20 @@ jobs:
             exit 1
           fi
 
-      # PASO 1: PREPARACIÓN (Detecta si es un PUSH real a master)
+      # PASO 1: PREPARACIÓN (Simplificado para asegurar ejecución en Master)
       - name: 1. Prepare Metadata and Version
         id: prep
-        # Forzamos la detección del push a master para desbloquear el resto de pasos
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          # Extraer ArtifactId dinámicamente
           PROJECT_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
           echo "ARTIFACT_ID=$PROJECT_ARTIFACTID" >> $GITHUB_OUTPUT
           
-          # Quitar SNAPSHOT para generar la 0.0.5
           mvn versions:set -DremoveSnapshot -DgenerateBackupPoms=false
           
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
-      # PASO 1.1: Persistir la versión Release en Master
+      # PASO 1.1: PERSISTIR VERSIÓN EN MASTER (Para que Render lo vea)
       - name: 1.1 Commit Release Version to Master
         if: steps.prep.outcome == 'success'
         run: |
@@ -75,16 +72,15 @@ jobs:
         if: steps.prep.outcome == 'success'
         run: mvn package -DskipTests
 
-      # PASO 3: PUBLICACIÓN (Este paso crea el Package 0.0.5)
+      # PASO 3: PUBLICACIÓN EN GITHUB PACKAGES
       - name: 3. Publish to GitHub Packages
         if: steps.prep.outcome == 'success'
         run: |
-          # Usamos el settings.xml generado por setup-java
           mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # PASO 4: ARTEFACTOS DEL RUN
+      # PASO 4: ARTEFACTOS
       - name: 4. Upload JAR to Artifacts
         if: steps.prep.outcome == 'success'
         uses: actions/upload-artifact@v4
@@ -93,18 +89,15 @@ jobs:
           path: target/*.jar
           retention-days: 7
 
-      # PASO 5: TAGS (Resiliente para evitar error 128)
+      # PASO 5: TAGS
       - name: 5. Tag Release Version
         if: steps.prep.outcome == 'success'
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           TAG_NAME="v${{ steps.prep.outputs.RELEASE_VERSION }}"
           git tag -f $TAG_NAME
-          git push origin :refs/tags/$TAG_NAME || echo "Tag no existía"
           git push origin $TAG_NAME
 
-      # PASO 6: RELEASE
+      # PASO 6: GITHUB RELEASE
       - name: 6. Create GitHub Release
         if: steps.prep.outcome == 'success'
         uses: softprops/action-gh-release@v2
@@ -114,7 +107,7 @@ jobs:
           files: target/*.jar
           generate_release_notes: true
 
-      # PASO 7: BUMP VERSIÓN EN DEVELOP
+      # PASO 7: BUMP EN DEVELOP
       - name: 7. Bump to Next SNAPSHOT on Develop
         if: steps.prep.outcome == 'success'
         run: |
@@ -122,8 +115,6 @@ jobs:
           git checkout develop
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          if [[ -n "$(git status --porcelain pom.xml)" ]]; then
-            git add pom.xml
-            git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
-            git push origin develop --force 
-          fi
+          git add pom.xml
+          git commit -m "chore: bump to next dev version $NEXT_VERSION [skip ci]"
+          git push origin develop --force
