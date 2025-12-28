@@ -57,6 +57,10 @@ public class SecurityConfig {
 
                 // Define las reglas de autorización (Acceso a Endpoints)
                 .authorizeHttpRequests(auth -> auth
+
+                        // 0. public health
+                        .requestMatchers("/api/public/health").permitAll() // Permitir acceso sin login
+
                         // 1. Rutas de Swagger/OpenAPI (PÚBLICAS)
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
