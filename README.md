@@ -3,7 +3,7 @@
 **CarnavaWikiApp Back** es el backend del proyecto **CarnavaWiki**, una aplicación para gestionar información relacionada con agrupaciones, concursos, ediciones y otros elementos del carnaval.  
 El backend está construido con **Spring Boot 3.3.1** y **Java 17**, siguiendo una arquitectura limpia y modular.
 
-----
+---
 
 ## 🚀 Tecnologías principales
 
