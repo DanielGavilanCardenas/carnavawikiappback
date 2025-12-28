@@ -8,8 +8,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/public")
 public class HealthController {
 
+
+    
+    private final org.springframework.boot.info.BuildProperties buildProperties;
+
+    public HealthController(org.springframework.boot.info.BuildProperties buildProperties) {
+        this.buildProperties = buildProperties;
+    }
+
     @GetMapping("/health")
     public String checkHealth() {
-        return "service UP";
+        return "service UP " + buildProperties.getVersion();
     }
 }
