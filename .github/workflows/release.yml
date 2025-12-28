@@ -60,6 +60,16 @@ jobs:
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "RELEASE_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
+      # PASO 1.1: Persistir la versión Release en Master
+      - name: 1.1 Commit Release Version to Master
+        if: steps.prep.outcome == 'success'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit -m "chore: release version ${{ steps.prep.outputs.RELEASE_VERSION }} [skip ci]"
+          git push origin master
+
       # PASO 2: COMPILACIÓN
       - name: 2. Build and Package
         if: steps.prep.outcome == 'success'
