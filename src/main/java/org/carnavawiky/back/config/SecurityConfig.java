@@ -60,7 +60,6 @@ public class SecurityConfig {
 
                         // 0. public health
                         .requestMatchers("/api/public/health").permitAll() // Permitir acceso sin login
-                        .anyRequest().authenticated()
 
                         // 1. Rutas de Swagger/OpenAPI (PÚBLICAS)
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
