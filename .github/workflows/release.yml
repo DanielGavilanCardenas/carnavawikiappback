@@ -8,17 +8,13 @@ on:
 jobs:
   release-and-bump:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Importante: Usar un token con permisos para disparar otros workflows si es necesario
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # USAMOS EL PAT AQUÍ PARA TENER PERMISOS DE PUSH
+          token: ${{ secrets.MY_RELEASE_PAT }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -29,32 +25,40 @@ jobs:
           server-id: github
           settings-path: ${{ github.workspace }}
 
-      # PASO 0: VALIDACIÓN
-      - name: 0. Run Tests
-        run: mvn clean verify
-
-      # PASO 1: PREPARACIÓN
-      - name: 1. Prepare Version
+      # 1. LIMPIEZA DE VERSIÓN EN MASTER
+      - name: 1. Remove Snapshot & Persist in Master
         id: prep
         run: |
-          # Extraemos la versión actual del POM (que tiene el -SNAPSHOT)
           RAW_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          # Quitamos el -SNAPSHOT para la publicación
           RELEASE_VERSION=${RAW_VERSION%-SNAPSHOT}
           echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-          # Seteamos la versión limpia en el POM solo para este entorno de ejecución
-          mvn versions:set -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
-
-      # PASO 2: PUBLICACIÓN (Esto subirá el package 0.1.2)
-      - name: 2. Publish to GitHub Packages
-        run: mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # PASO 3: TAGGING (Para marcar el hito en Git)
-      - name: 3. Tag Release
-        run: |
+          
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag v${{ steps.prep.outputs.RELEASE_VERSION }}
-          git push origin v${{ steps.prep.outputs.RELEASE_VERSION }}
+          
+          mvn versions:set -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
+          git add pom.xml
+          git commit -m "chore: release version $RELEASE_VERSION [skip ci]"
+          git push origin master
+
+      # 2. SUBIDA A GITHUB PACKAGES
+      - name: 2. Build & Publish Package
+        run: |
+          mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
+        env:
+          # Maven también usará el PAT para autenticarse en Packages
+          GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PAT }}
+
+      # 3. ACTUALIZAR DEVELOP (Subir Minor + Snapshot)
+      - name: 3. Bump Minor on Develop
+        run: |
+          git fetch origin develop
+          git checkout develop
+          
+          mvn versions:set -DnewVersion=${{ steps.prep.outputs.RELEASE_VERSION }} -DgenerateBackupPoms=false
+          mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
+          
+          NEW_DEV_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          git add pom.xml
+          git commit -m "chore: bump to next dev version $NEW_DEV_VERSION [skip ci]"
+          git push origin develop
