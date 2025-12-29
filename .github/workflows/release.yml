@@ -1,19 +1,23 @@
 name: Full Release Cycle & Quality Gate
 
 on:
-  push:
+  # Se activa al cerrar un PR contra master (evento que incluye el merge)
+  pull_request:
+    types: [closed]
     branches:
       - master
 
 jobs:
   release-and-bump:
+    # IMPORTANTE: Solo se ejecuta si el PR se cerró mediante un MERGE
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # USAMOS EL PAT AQUÍ PARA TENER PERMISOS DE PUSH
           token: ${{ secrets.MY_RELEASE_PAT }}
 
       - name: Set up JDK
@@ -25,10 +29,11 @@ jobs:
           server-id: github
           settings-path: ${{ github.workspace }}
 
-      # 1. LIMPIEZA DE VERSIÓN EN MASTER
+      # 1. PREPARACIÓN Y LIMPIEZA EN MASTER
       - name: 1. Remove Snapshot & Persist in Master
         id: prep
         run: |
+          # Extraer versión y limpiar SNAPSHOT
           RAW_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           RELEASE_VERSION=${RAW_VERSION%-SNAPSHOT}
           echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
@@ -36,25 +41,25 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
+          # Cambiar versión, commit y push directo a master
           mvn versions:set -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
           git add pom.xml
           git commit -m "chore: release version $RELEASE_VERSION [skip ci]"
           git push origin master
 
-      # 2. SUBIDA A GITHUB PACKAGES
+      # 2. PUBLICACIÓN DEL PACKAGE
       - name: 2. Build & Publish Package
-        run: |
-          mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
+        run: mvn deploy -s ${{ github.workspace }}/settings.xml -DskipTests -U
         env:
-          # Maven también usará el PAT para autenticarse en Packages
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PAT }}
 
-      # 3. ACTUALIZAR DEVELOP (Subir Minor + Snapshot)
+      # 3. ACTUALIZACIÓN DE DEVELOP
       - name: 3. Bump Minor on Develop
         run: |
           git fetch origin develop
           git checkout develop
           
+          # Subir minor: 0.1.2 -> 0.1.3-SNAPSHOT
           mvn versions:set -DnewVersion=${{ steps.prep.outputs.RELEASE_VERSION }} -DgenerateBackupPoms=false
           mvn versions:set -DnextSnapshot=true -DgenerateBackupPoms=false
           
