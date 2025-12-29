@@ -8,20 +8,6 @@ on:
       - master
 
 jobs:
-  check_branch:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Verify source branch
-          if: github.head_ref != 'develop'
-          run: |
-            if [ "${{ github.head_ref }}" = "develop" ]; then
-              echo "✅ Pull request desde develop permitido."
-            else
-              echo "❌ Error: Solo se permiten merges a 'main' desde la rama 'develop'."
-              echo "Rama intentada: ${{ github.head_ref }}"
-              exit 1
-            fi
-
   release-and-bump:
     # IMPORTANTE: Solo se ejecuta si el PR se cerró mediante un MERGE
     if: github.event.pull_request.merged == true
