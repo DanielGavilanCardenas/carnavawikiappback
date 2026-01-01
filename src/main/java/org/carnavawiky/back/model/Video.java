@@ -2,6 +2,7 @@ package org.carnavawiky.back.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -17,5 +18,6 @@ public class Video {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agrupacion_id")
+    @ToString.Exclude // Evita bucles infinitos en el log/toString
     private Agrupacion agrupacion;
 }

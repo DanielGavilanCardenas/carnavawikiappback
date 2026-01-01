@@ -3,13 +3,14 @@ package org.carnavawiky.back.service;
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
 import org.carnavawiky.back.dto.PageResponse;
+import org.carnavawiky.back.dto.VideoResponse;
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.AgrupacionMapper;
 import org.carnavawiky.back.model.Agrupacion;
-import org.carnavawiky.back.model.Localidad; // << NUEVA IMPORTACIÓN
+import org.carnavawiky.back.model.Localidad;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.AgrupacionRepository;
-import org.carnavawiky.back.repository.LocalidadRepository; // << NUEVA IMPORTACIÓN
+import org.carnavawiky.back.repository.LocalidadRepository;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -135,5 +138,27 @@ public class AgrupacionService {
 
         // 2. Eliminar
         agrupacionRepository.delete(agrupacion);
+    }
+
+
+    /**
+     * Obtiene una agrupación y transforma su lista de vídeos internos
+     * en una lista de VideoResponse para el Frontend.
+     */
+    @Transactional(readOnly = true)
+    public List<VideoResponse> obtenerVideosDeAgrupacion(Long agrupacionId) {
+        Agrupacion agrupacion = agrupacionRepository.findById(agrupacionId)
+                .orElseThrow(() -> new RuntimeException("Agrupación no encontrada"));
+
+        return agrupacion.getVideos().stream()
+                .map(video -> VideoResponse.builder()
+                        .id(video.getId())
+                        .titulo(video.getTitulo())
+                        .urlYoutube(video.getUrlYoutube())
+                        .verificado(video.isVerificado())
+                        .agrupacionId(agrupacion.getId())
+                        .agrupacionNombre(agrupacion.getNombre())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

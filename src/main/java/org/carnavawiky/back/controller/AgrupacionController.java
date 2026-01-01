@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
 import org.carnavawiky.back.dto.PageResponse; // << IMPORTAR
+import org.carnavawiky.back.dto.VideoResponse;
 import org.carnavawiky.back.service.AgrupacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable; // << IMPORTAR
@@ -11,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -81,5 +84,14 @@ public class AgrupacionController {
     public ResponseEntity<Void> eliminarAgrupacion(@PathVariable Long id) {
         agrupacionService.eliminarAgrupacion(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Devuelve la lista de vídeos (convertidos a DTO) asociados
+     * a una agrupación específica.
+     */
+    @GetMapping("/{id}/videos")
+    public List<VideoResponse> getVideosByAgrupacion(@PathVariable Long id) {
+        return agrupacionService.obtenerVideosDeAgrupacion(id);
     }
 }
