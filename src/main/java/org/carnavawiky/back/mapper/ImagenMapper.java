@@ -18,7 +18,7 @@ public class ImagenMapper {
         response.setId(entity.getId());
         response.setNombreFichero(entity.getNombreFichero());
         response.setUrlPublica(entity.getUrlPublica());
-        response.setEsPortada(entity.getEsPortada());
+        response.setEsPortada(entity.getEsPortada() != null && entity.getEsPortada());
 
         // Mapeo de Agrupación
         if (entity.getAgrupacion() != null) {

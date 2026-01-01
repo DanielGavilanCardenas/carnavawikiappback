@@ -19,8 +19,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -74,13 +72,11 @@ public class ImagenControllerTest {
         imagenResponse = new ImagenResponse();
         imagenResponse.setId(10L);
         imagenResponse.setNombreFichero("carnaval_foto.jpg");
-        imagenResponse.setUrlPublica("http://localhost:8080/api/imagenes/ficheros/carnaval_foto.jpg");
+        imagenResponse.setUrlPublica("https://res.cloudinary.com/demo/image/upload/v1234567890/carnaval_foto.jpg");
         imagenResponse.setEsPortada(true);
         imagenResponse.setAgrupacionId(1L);
         imagenResponse.setAgrupacionNombre("Comparsa de Cádiz");
     }
-
-
 
     @Test
     @DisplayName("POST /api/imagenes - ADMIN sube imagen exitosamente")
@@ -118,22 +114,6 @@ public class ImagenControllerTest {
         mockMvc.perform(get("/api/imagenes/agrupacion/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].agrupacionId").value(1L));
-    }
-
-    @Test
-    @DisplayName("GET /api/imagenes/ficheros/{name} - Descarga de recurso")
-    @WithMockUser(roles = "USER")
-    void testDownloadFile_Ok() throws Exception {
-        Resource resource = new ByteArrayResource("contenido".getBytes()) {
-            @Override
-            public String getFilename() { return "carnaval_foto.jpg"; }
-        };
-
-        when(imagenService.cargarFicheroComoRecurso("carnaval_foto.jpg")).thenReturn(resource);
-
-        mockMvc.perform(get("/api/imagenes/ficheros/carnaval_foto.jpg"))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Content-Disposition", "inline; filename=\"carnaval_foto.jpg\""));
     }
 
     @Test
