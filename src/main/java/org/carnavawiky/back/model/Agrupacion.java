@@ -6,6 +6,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -47,10 +49,13 @@ public class Agrupacion {
     @JoinColumn(name = "usuario_creador_id", nullable = false)
     private Usuario usuarioCreador;
 
-    // =======================================================
-    // AÑADIDO: Localidad (N:1)
-    // =======================================================
+
     @ManyToOne(fetch = FetchType.EAGER) // Se carga al obtener la Agrupación (preferible para catálogos pequeños)
     @JoinColumn(name = "localidad_id", nullable = false) // Columna de clave foránea
     private Localidad localidad;
+
+    // Relación bidireccional: una agrupación tiene muchos vídeos
+    // orphanRemoval = true asegura que si borras un vídeo de la lista, se borre de la BD
+    @OneToMany(mappedBy = "agrupacion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Video> videos = new ArrayList<>();
 }

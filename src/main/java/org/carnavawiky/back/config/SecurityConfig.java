@@ -83,7 +83,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/videos/public").permitAll()
                         .requestMatchers("/api/videos/admin/**").hasRole("ESPECIALISTO")
 
-                        // 5. Resto de endpoints (incluyendo GET), requiere autenticación (JWT Válido)
+                        // 6. PROTECCION DE IMAGENES
+                        .requestMatchers(HttpMethod.DELETE, "/api/imagenes/**").hasRole(ADMIN)
+
+                        // 7. Resto de endpoints (incluyendo GET), requiere autenticación (JWT Válido)
                         .anyRequest().authenticated()
                 )
 
