@@ -26,90 +26,83 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // 💡 CRÍTICO: Habilita el uso de @PreAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    public static final String ADMIN = "ADMIN";
     @Autowired
-    private JwtTokenFilter jwtTokenFilter; // El filtro que valida el JWT
+    private JwtTokenFilter jwtTokenFilter;
 
-    // 1. Cifrado de Contraseña (BCrypt)
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    private static final String ADMIN = "ADMIN";
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. Define el AuthenticationManager (Necesario para el login)
     @Bean
-    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService); // Nuestro CustomUserDetailsService
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
-        return new ProviderManager(authenticationProvider);
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(authProvider);
     }
 
-    // 3. Reglas de Acceso por Endpoints (SecurityFilterChain)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Deshabilitar CSRF para APIs REST
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // Define las reglas de autorización (Acceso a Endpoints)
                 .authorizeHttpRequests(auth -> auth
-
-                        // 0. public health
-                        .requestMatchers("/api/public/health").permitAll() // Permitir acceso sin login
-
-                        // 1. Rutas de Swagger/OpenAPI (PÚBLICAS)
+                        // 1. Endpoints Públicos de Salud y Documentación
+                        .requestMatchers("/api/public/health").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                        // 2. Endpoints de autenticación (Registro, Login) (PÚBLICOS)
+                        // 2. Autenticación y Registro
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 3. PROTECCIÓN DE LOCALIDADES (POST/PUT/DELETE)
-                        // POST (Crear): Solo ADMIN
+                        // 3. TEXTOS: Acceso público para lectura (imprescindible para carga inicial)
+                        .requestMatchers(HttpMethod.GET, "/api/textos/**").permitAll()
+                        // Solo ADMIN puede gestionar los textos (CRUD)
+                        .requestMatchers(HttpMethod.POST, "/api/textos/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/api/textos/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PATCH, "/api/textos/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, "/api/textos/**").hasRole(ADMIN)
+
+                        // 4. Localidades
                         .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole(ADMIN)
-                        // PUT (Actualizar): Solo ADMIN
                         .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole(ADMIN)
-                        // DELETE (Eliminar): Solo ADMIN
                         .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole(ADMIN)
 
-                        // 4. Endpoints protegidos por Roles generales
+                        // 5. Vídeos y otros contenidos
+                        .requestMatchers("/api/videos/public").permitAll()
+                        .requestMatchers("/api/videos/admin/**").hasAnyRole(ADMIN, "ESPECIALISTO")
+                        .requestMatchers(HttpMethod.DELETE, "/api/imagenes/**").hasRole(ADMIN)
+
+                        // 6. Admin general
                         .requestMatchers("/api/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/especialisto/**").hasAnyRole(ADMIN, "ESPECIALISTO")
 
-                        //5. PROTECCION DE VIDEOS
-                        .requestMatchers("/api/videos/public").permitAll()
-                        .requestMatchers("/api/videos/admin/**").hasRole("ESPECIALISTO")
-
-                        // 6. PROTECCION DE IMAGENES
-                        .requestMatchers(HttpMethod.DELETE, "/api/imagenes/**").hasRole(ADMIN)
-
-                        // 7. Resto de endpoints (incluyendo GET), requiere autenticación (JWT Válido)
+                        // 7. Cualquier otra petición requiere login
                         .anyRequest().authenticated()
                 )
-
-                // 6. Configuración de Sesión (Sin estado/Stateless, crucial para JWT)
+                // Configuración Stateless para JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // 7. AÑADIR NUESTRO FILTRO PERSONALIZADO JWT
-                // Se ejecuta ANTES del filtro de autenticación por usuario/contraseña de Spring
+                // Filtro JWT antes del filtro de autenticación estándar
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-    //
 
-    // 8. Configuración CORS (Necesario para la comunicación con Angular)
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // Configuración para permitir orígenes, métodos y headers
+        // Permitimos los orígenes habituales de desarrollo
         config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:8081", "http://localhost:8083"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
