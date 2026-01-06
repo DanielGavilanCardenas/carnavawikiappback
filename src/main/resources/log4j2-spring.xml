@@ -2,7 +2,9 @@
 <Configuration status="INFO">
     <Properties>
         <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{30} - %msg%n</Property>
-        <Property name="LOG_FILE_NAME">logs/carnavawiky-app</Property>
+
+        <Property name="LOG_FILE_PATH">${spring:app.log.path:-logs}</Property>
+        <Property name="LOG_FILE_NAME">carnavawiky-app.log</Property>
     </Properties>
 
     <Appenders>
@@ -11,17 +13,19 @@
         </Console>
 
         <RollingFile name="FileAppender"
-                     fileName="${LOG_FILE_NAME}.log"
-                     filePattern="${LOG_FILE_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
-
+                     fileName="${LOG_FILE_PATH}/${LOG_FILE_NAME}.log"
+                     filePattern="${LOG_FILE_PATH}/archived/${LOG_FILE_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
             <PatternLayout pattern="${LOG_PATTERN}"/>
-
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
                 <SizeBasedTriggeringPolicy size="10MB"/>
             </Policies>
-
-            <DefaultRolloverStrategy max="7"/>
+            <DefaultRolloverStrategy max="20">
+                <Delete basePath="${LOG_FILE_PATH}/archived" maxDepth="1">
+                    <IfFileName glob="${LOG_FILE_NAME}-*.log.gz" />
+                    <IfLastModified age="30d" />
+                </Delete>
+            </DefaultRolloverStrategy>
         </RollingFile>
     </Appenders>
 
@@ -30,13 +34,16 @@
             <AppenderRef ref="ConsoleAppender"/>
             <AppenderRef ref="FileAppender"/>
         </Logger>
-
+        <Logger name="org.springframework.web" level="debug" additivity="false">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
         <Logger name="org.springframework" level="info" additivity="false">
             <AppenderRef ref="ConsoleAppender"/>
         </Logger>
-
         <Root level="info">
             <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
         </Root>
     </Loggers>
 </Configuration>
