@@ -2,7 +2,7 @@
 
 **CarnavaWikiApp Back** es el backend del proyecto **CarnavaWiki**, una plataforma integral para la gestión y consulta de información sobre el Carnaval. Permite administrar agrupaciones, concursos, ediciones, premios, componentes, y contenido multimedia (imágenes y vídeos).
 
-El backend está construido con **Spring Boot 3.3.1** y **Java 17**, siguiendo una arquitectura limpia y modular, y utiliza **Cloudinary** para la gestión de imágenes.
+El backend está construido con **Spring Boot 3.3.1** y **Java 17**, siguiendo una arquitectura limpia y modular.
 
 ----
 
@@ -14,13 +14,15 @@ El backend está construido con **Spring Boot 3.3.1** y **Java 17**, siguiendo u
   - **Spring Security**: Gestión de autenticación y autorización basada en roles.
   - **Spring Data JPA**: Persistencia de datos con Hibernate.
   - **Spring Validation**: Validación de datos de entrada.
+  - **Spring Cache**: Mejora de rendimiento mediante caché (Ehcache).
+  - **Spring Boot Starter Mail**: Envío de correos electrónicos.
 - **Base de Datos**: MySQL (producción) / H2 (tests).
-- **Cloudinary**: Almacenamiento y gestión de imágenes en la nube.
+- **Log4j2**: Sistema de logging de alto rendimiento.
 - **Lombok**: Reducción de código repetitivo (boilerplate).
 - **JWT (JSON Web Tokens)**: Autenticación segura y sin estado (Stateless).
 - **OpenAPI/Swagger**: Documentación interactiva de la API.
 - **Maven**: Gestión de dependencias y ciclo de vida del proyecto.
-- **Docker**: Contenerización de la aplicación (Dockerfile incluido).
+- **JaCoCo**: Análisis de cobertura de código.
 
 ---
 
@@ -32,7 +34,7 @@ El proyecto sigue una arquitectura en capas clásica de Spring Boot:
 src/
  ├── main/
  │   ├── java/org/carnavawiky/back/
- │   │   ├── config/         # Configuración (Security, Cloudinary, Swagger, CORS, JPA Auditing)
+ │   │   ├── config/         # Configuración (Security, Swagger, CORS, JPA Auditing)
  │   │   ├── controller/     # Controladores REST (Endpoints de la API)
  │   │   ├── dto/            # Data Transfer Objects (Request/Response)
  │   │   ├── model/          # Entidades JPA (Base de datos)
@@ -53,7 +55,7 @@ src/
 - **Concursos y Ediciones**: Información sobre concursos (COAC, etc.) y sus ediciones anuales.
 - **Componentes y Personas**: Registro de autores, directores y componentes de las agrupaciones.
 - **Multimedia**:
-  - **Imágenes**: Subida y gestión a través de Cloudinary.
+  - **Imágenes**: Subida y gestión de imágenes (almacenamiento local expuesto vía API).
   - **Vídeos**: Enlaces a YouTube verificados por especialistas.
 - **Premios y Localidades**: Gestión de palmarés y ubicaciones geográficas.
 
@@ -66,7 +68,6 @@ src/
 - **Java 17+**
 - **Maven 3.9+**
 - **MySQL** (o base de datos compatible)
-- **Cuenta en Cloudinary** (para gestión de imágenes)
 
 ### Variables de entorno
 
@@ -87,11 +88,10 @@ spring:
     secret: TU_SECRETO_JWT_MUY_LARGO_Y_SEGURO
     expiration: 86400000 # 24 horas en milisegundos
 
-# Configuración Cloudinary
-cloudinary:
-  cloud_name: TU_CLOUD_NAME
-  api_key: TU_API_KEY
-  api_secret: TU_API_SECRET
+# Configuración de subida de archivos
+file:
+  upload:
+    location: uploads # Directorio donde se guardarán las imágenes
 ```
 
 ---
@@ -127,6 +127,7 @@ El sistema implementa seguridad basada en **JWT** y **Roles**:
 - `/api/auth/**` (Login, Registro)
 - `/api/public/health` (Health check)
 - `/api/videos/public` (Listar vídeos verificados)
+- `/api/imagenes/**` (Visualización de imágenes - GET)
 - `/v3/api-docs/**`, `/swagger-ui/**` (Documentación)
 
 ---
@@ -140,15 +141,17 @@ Accede a:
 
 ---
 
-## 🧪 Pruebas
+## 🧪 Pruebas y Calidad de Código
 
-El proyecto cuenta con una amplia cobertura de tests unitarios y de integración usando **JUnit 5** y **Mockito**.
+El proyecto cuenta con una amplia cobertura de tests unitarios y de integración usando **JUnit 5** y **Mockito**. Además, se utiliza **JaCoCo** para medir la cobertura de código, exigiendo un mínimo del 80%.
 
-Para ejecutar los tests:
+Para ejecutar los tests y generar el reporte de cobertura:
 
 ```bash
 mvn test
 ```
+
+El reporte de JaCoCo se generará en `target/site/jacoco/index.html`.
 
 ---
 
@@ -160,7 +163,9 @@ Para generar el artefacto `.jar` ejecutable:
 mvn clean package
 ```
 
-El archivo se generará en: `target/carnavawikiappback-0.1.7-SNAPSHOT.jar`
+El archivo se generará en: `target/carnavawikiappback-1.0.4-SNAPSHOT.jar`
+
+El proyecto está configurado para publicar paquetes en **GitHub Packages**.
 
 ---
 
