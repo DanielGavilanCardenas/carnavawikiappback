@@ -167,6 +167,7 @@ El archivo se generará en: `target/carnavawikiappback-1.0.4-SNAPSHOT.jar`
 
 El proyecto está configurado para publicar paquetes en **GitHub Packages**.
 
+
 ---
 
 ## 📄 Licencia
