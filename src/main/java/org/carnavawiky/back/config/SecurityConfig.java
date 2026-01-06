@@ -26,16 +26,50 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
     private JwtTokenFilter jwtTokenFilter;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
-
     private static final String ADMIN = "ADMIN";
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        // 1. Endpoints públicos de Auth y Swagger
+                        .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+                        // 2. ACCESO PÚBLICO A IMÁGENES (Añadido/Modificado)
+                        // Permitimos que CUALQUIERA pueda ver las imágenes (GET)
+                        .requestMatchers(HttpMethod.GET, "/api/imagenes/**").permitAll()
+
+                        // Protegemos la subida y el borrado solo para ADMIN
+                        .requestMatchers(HttpMethod.POST, "/api/imagenes/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, "/api/imagenes/**").hasRole(ADMIN)
+
+                        // 3. Agrupaciones: Público ver, Admin editar
+                        .requestMatchers(HttpMethod.GET, "/api/agrupaciones/**").permitAll()
+                        .requestMatchers("/api/agrupaciones/**").hasRole(ADMIN)
+
+                        // 4. Categorías: Público ver, Admin editar
+                        .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+                        .requestMatchers("/api/categorias/**").hasRole(ADMIN)
+
+                        // 5. Admin general
+                        .requestMatchers("/api/admin/**").hasRole(ADMIN)
+                        .requestMatchers("/api/especialisto/**").hasAnyRole(ADMIN, "ESPECIALISTO")
+
+                        // 6. Cualquier otra petición requiere login
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,7 +77,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() {
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
@@ -51,56 +85,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        // 1. Endpoints Públicos de Salud y Documentación
-                        .requestMatchers("/api/public/health").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-
-                        // 2. Autenticación y Registro
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        // 3. TEXTOS: Acceso público para lectura (imprescindible para carga inicial)
-                        .requestMatchers(HttpMethod.GET, "/api/textos/**").permitAll()
-                        // Solo ADMIN puede gestionar los textos (CRUD)
-                        .requestMatchers(HttpMethod.POST, "/api/textos/**").hasRole(ADMIN)
-                        .requestMatchers(HttpMethod.PUT, "/api/textos/**").hasRole(ADMIN)
-                        .requestMatchers(HttpMethod.PATCH, "/api/textos/**").hasRole(ADMIN)
-                        .requestMatchers(HttpMethod.DELETE, "/api/textos/**").hasRole(ADMIN)
-
-                        // 4. Localidades
-                        .requestMatchers(HttpMethod.POST, "/api/localidades").hasRole(ADMIN)
-                        .requestMatchers(HttpMethod.PUT, "/api/localidades/**").hasRole(ADMIN)
-                        .requestMatchers(HttpMethod.DELETE, "/api/localidades/**").hasRole(ADMIN)
-
-                        // 5. Vídeos y otros contenidos
-                        .requestMatchers("/api/videos/public").permitAll()
-                        .requestMatchers("/api/videos/admin/**").hasAnyRole(ADMIN, "ESPECIALISTO")
-                        .requestMatchers(HttpMethod.DELETE, "/api/imagenes/**").hasRole(ADMIN)
-
-                        // 6. Admin general
-                        .requestMatchers("/api/admin/**").hasRole(ADMIN)
-                        .requestMatchers("/api/especialisto/**").hasAnyRole(ADMIN, "ESPECIALISTO")
-
-                        // 7. Cualquier otra petición requiere login
-                        .anyRequest().authenticated()
-                )
-                // Configuración Stateless para JWT
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Filtro JWT antes del filtro de autenticación estándar
-                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-
-    @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // Permitimos los orígenes habituales de desarrollo
         config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:8081", "http://localhost:8083"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));

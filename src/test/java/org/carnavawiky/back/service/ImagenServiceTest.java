@@ -1,8 +1,5 @@
 package org.carnavawiky.back.service;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.Uploader;
-import org.carnavawiky.back.dto.ImagenRequest;
 import org.carnavawiky.back.dto.ImagenResponse;
 import org.carnavawiky.back.mapper.ImagenMapper;
 import org.carnavawiky.back.model.Agrupacion;
@@ -17,9 +14,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,82 +37,74 @@ class ImagenServiceTest {
     @Mock
     private ImagenMapper imagenMapper;
 
-    @Mock
-    private Cloudinary cloudinary;
-
-    @Mock
-    private Uploader uploader;
-
     @InjectMocks
     private ImagenService imagenService;
 
     private Agrupacion agrupacion;
     private Imagen imagen;
     private ImagenResponse imagenResponse;
-    private ImagenRequest imagenRequest;
     private MockMultipartFile mockFile;
+    private Path tempDir;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        // Configurar directorio temporal para simular subida de archivos
+        tempDir = Files.createTempDirectory("uploads");
+        ReflectionTestUtils.setField(imagenService, "uploadLocation", tempDir.toString());
+
         agrupacion = new Agrupacion();
         agrupacion.setId(10L);
 
         imagen = new Imagen();
         imagen.setId(1L);
-        imagen.setNombreFichero("public_id_cloudinary");
+        imagen.setNombreFichero("test-uuid.jpg");
+        imagen.setRutaAbsoluta(tempDir.resolve("test-uuid.jpg").toString());
 
         imagenResponse = new ImagenResponse();
         imagenResponse.setId(1L);
-        imagenResponse.setUrlPublica("https://res.cloudinary.com/demo/image/upload/v1234567890/public_id_cloudinary.jpg");
-
-        imagenRequest = new ImagenRequest();
-        imagenRequest.setAgrupacionId(10L);
-        imagenRequest.setEsPortada(true);
+        imagenResponse.setUrlPublica("/api/imagenes/test-uuid.jpg");
 
         mockFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
     }
 
     @Test
-    @DisplayName("Debe guardar una imagen correctamente en Cloudinary")
+    @DisplayName("Debe guardar una imagen correctamente en el sistema de archivos")
     void testGuardarImagen_Exito() throws IOException {
         // ARRANGE
         when(agrupacionRepository.findById(10L)).thenReturn(Optional.of(agrupacion));
-        
-        // Mock de Cloudinary
-        when(cloudinary.uploader()).thenReturn(uploader);
-        Map<String, Object> uploadResult = Map.of(
-            "public_id", "public_id_cloudinary",
-            "secure_url", "https://res.cloudinary.com/demo/image/upload/v1234567890/public_id_cloudinary.jpg"
-        );
-        when(uploader.upload(any(byte[].class), any(Map.class))).thenReturn(uploadResult);
-
         when(imagenRepository.save(any(Imagen.class))).thenReturn(imagen);
         when(imagenMapper.toResponse(any(Imagen.class))).thenReturn(imagenResponse);
 
         // ACT
-        ImagenResponse result = imagenService.guardarImagen(mockFile, imagenRequest);
+        ImagenResponse result = imagenService.subirImagen(10L, mockFile, true);
 
         // ASSERT
         assertNotNull(result);
         assertEquals(imagenResponse.getUrlPublica(), result.getUrlPublica());
+        
         verify(imagenRepository).save(any(Imagen.class));
-        verify(uploader).upload(any(byte[].class), any(Map.class));
         verify(imagenRepository).desmarcarPortadaActual(10L); // Verifica que se desmarca la portada anterior
+        
+        // Verificar que se creó algún archivo en el directorio temporal
+        assertTrue(Files.list(tempDir).count() > 0);
     }
 
     @Test
-    @DisplayName("Debe eliminar una imagen correctamente de Cloudinary")
+    @DisplayName("Debe eliminar una imagen correctamente del sistema de archivos")
     void testEliminarImagen_Exito() throws IOException {
         // ARRANGE
+        // Primero creamos un archivo real para que pueda ser borrado
+        Path archivoReal = tempDir.resolve("test-uuid.jpg");
+        Files.createFile(archivoReal);
+        imagen.setRutaAbsoluta(archivoReal.toString());
+
         when(imagenRepository.findById(1L)).thenReturn(Optional.of(imagen));
-        when(cloudinary.uploader()).thenReturn(uploader);
-        when(uploader.destroy(anyString(), any(Map.class))).thenReturn(Map.of("result", "ok"));
 
         // ACT
         imagenService.eliminarImagen(1L);
 
         // ASSERT
         verify(imagenRepository).delete(imagen);
-        verify(uploader).destroy(eq("public_id_cloudinary"), any(Map.class));
+        assertFalse(Files.exists(archivoReal)); // Verificar que el archivo físico fue borrado
     }
 }

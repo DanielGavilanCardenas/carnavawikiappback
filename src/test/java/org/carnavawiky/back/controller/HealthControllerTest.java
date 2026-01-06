@@ -13,6 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
@@ -38,6 +39,7 @@ class HealthControllerTest {
 
     @Test
     @DisplayName("Debe devolver 'service UP' con la versión")
+    @WithMockUser // Simulamos un usuario autenticado para pasar la seguridad
     void testCheckHealth() throws Exception {
         // Configuramos el mock para devolver una versión de prueba
         when(buildProperties.getVersion()).thenReturn("1.0.0-TEST");

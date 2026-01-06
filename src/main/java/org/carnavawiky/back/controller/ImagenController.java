@@ -1,6 +1,5 @@
 package org.carnavawiky.back.controller;
 
-import org.carnavawiky.back.dto.ImagenRequest;
 import org.carnavawiky.back.dto.ImagenResponse;
 import org.carnavawiky.back.service.ImagenService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +21,9 @@ public class ImagenController {
     @ResponseStatus(HttpStatus.CREATED)
     public ImagenResponse subirImagen(
             @RequestParam("file") MultipartFile file,
-            @ModelAttribute ImagenRequest request) throws IOException {
-        return imagenService.guardarImagen(file, request);
+            @RequestParam("agrupacionId") Long agrupacionId,
+            @RequestParam(value = "esPortada", defaultValue = "false") Boolean esPortada) throws IOException {
+        return imagenService.subirImagen(agrupacionId, file, esPortada);
     }
 
     @GetMapping("/agrupacion/{agrupacionId}")
@@ -36,5 +36,4 @@ public class ImagenController {
     public void eliminar(@PathVariable Long id) throws IOException {
         imagenService.eliminarImagen(id);
     }
-
 }
