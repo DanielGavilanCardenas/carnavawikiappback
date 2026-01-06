@@ -16,27 +16,21 @@ public class Imagen {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Nombre único del fichero guardado en el servidor
+    // Nombre único generado (UUID) para el archivo en el disco
     @Column(nullable = false)
     private String nombreFichero;
 
-    // Ruta absoluta donde está almacenado el fichero en el sistema del servidor
+    // Ruta completa en el sistema de archivos (ej: C:/devfiles/...)
     @Column(nullable = false)
     private String rutaAbsoluta;
 
-    // URL pública para acceder al recurso estático (ej: /images/fichero.jpg)
+    // URL que se devuelve al frontend (ej: /api/imagenes/nombre-archivo.jpg)
     @Column(nullable = false)
     private String urlPublica;
 
-    // Indicador si esta imagen es la portada principal de la Agrupación.
     @Column(nullable = false)
     private Boolean esPortada = false;
 
-    // =======================================================
-    // RELACIÓN
-    // =======================================================
-
-    // Relación Muchos a Uno (N:1) con Agrupacion
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agrupacion_id", nullable = false)
     private Agrupacion agrupacion;
