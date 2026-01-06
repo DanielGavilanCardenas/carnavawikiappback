@@ -1,8 +1,5 @@
 package org.carnavawiky.back.service;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
-import org.carnavawiky.back.dto.ImagenRequest;
 import org.carnavawiky.back.dto.ImagenResponse;
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.ImagenMapper;
@@ -11,13 +8,15 @@ import org.carnavawiky.back.model.Imagen;
 import org.carnavawiky.back.repository.AgrupacionRepository;
 import org.carnavawiky.back.repository.ImagenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.*;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,86 +31,63 @@ public class ImagenService {
     @Autowired
     private ImagenMapper imagenMapper;
 
-    // Inyectamos el Bean de Cloudinary que configuramos anteriormente
-    @Autowired
-    private Cloudinary cloudinary;
+    @Value("${file.upload.location}")
+    private String uploadLocation;
 
-    // =======================================================
-    // Helpers
-    // =======================================================
-
-    private Agrupacion findAgrupacion(Long id) {
-        return agrupacionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agrupacion", "id", id));
-    }
-
-    // =======================================================
-    // 1. SUBIR Y GUARDAR IMAGEN (POST) - AHORA EN CLOUDINARY
-    // =======================================================
     @Transactional
-    public ImagenResponse guardarImagen(MultipartFile file, ImagenRequest request) throws IOException {
+    public ImagenResponse subirImagen(Long agrupacionId, MultipartFile archivo, Boolean esPortada) throws IOException {
+        Agrupacion agrupacion = agrupacionRepository.findById(agrupacionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agrupacion", "id", agrupacionId));
 
-        // 1. Validar la Agrupación
-        Agrupacion agrupacion = findAgrupacion(request.getAgrupacionId());
-
-        // 2. Subir el archivo a Cloudinary
-        // Especificamos una carpeta para mantener ordenado el bucket
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                ObjectUtils.asMap("folder", "carnavawiky/agrupaciones"));
-
-        String publicUrl = uploadResult.get("secure_url").toString();
-        String publicId = uploadResult.get("public_id").toString();
-
-        // 3. Lógica de Portada: Si se marca como portada, desmarcar la anterior
-        if (Boolean.TRUE.equals(request.getEsPortada())) {
-            imagenRepository.desmarcarPortadaActual(agrupacion.getId());
+        // 1. Crear directorio si no existe
+        Path root = Paths.get(uploadLocation);
+        if (!Files.exists(root)) {
+            Files.createDirectories(root);
         }
 
-        // 4. Crear la entidad Imagen con los datos de Cloudinary
+        // 2. Gestionar la portada (si es nueva portada, desmarcamos la anterior)
+        if (Boolean.TRUE.equals(esPortada)) {
+            imagenRepository.desmarcarPortadaActual(agrupacionId);
+        }
+
+        // 3. Generar nombre único y guardar archivo
+        String extension = "";
+        String originalName = archivo.getOriginalFilename();
+        if (originalName != null && originalName.contains(".")) {
+            extension = originalName.substring(originalName.lastIndexOf("."));
+        }
+        String nombreFichero = UUID.randomUUID().toString() + extension;
+        Path destino = root.resolve(nombreFichero);
+        Files.copy(archivo.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+
+        // 4. Guardar en Base de Datos
         Imagen imagen = new Imagen();
+        imagen.setNombreFichero(nombreFichero);
+        imagen.setRutaAbsoluta(destino.toString());
+        imagen.setUrlPublica("/api/imagenes/" + nombreFichero);
+        imagen.setEsPortada(esPortada);
         imagen.setAgrupacion(agrupacion);
-        imagen.setNombreFichero(publicId); // Guardamos el publicId de Cloudinary para futuras eliminaciones
-        imagen.setUrlPublica(publicUrl);   // URL estable y definitiva (HTTPS)
-        imagen.setEsPortada(request.getEsPortada());
 
-        // La ruta absoluta ya no es necesaria para ficheros locales,
-        // pero podemos guardar el publicId como referencia.
-        imagen.setRutaAbsoluta("cloudinary://" + publicId);
-
-        // 5. Guardar metadatos en la DB
-        Imagen nuevaImagen = imagenRepository.save(imagen);
-
-        return imagenMapper.toResponse(nuevaImagen);
+        Imagen guardada = imagenRepository.save(imagen);
+        return imagenMapper.toResponse(guardada);
     }
 
-    // =======================================================
-    // 2. OBTENER IMÁGENES POR AGRUPACIÓN (GET)
-    // =======================================================
     @Transactional(readOnly = true)
     public List<ImagenResponse> obtenerImagenesPorAgrupacion(Long agrupacionId) {
-        findAgrupacion(agrupacionId);
         List<Imagen> imagenes = imagenRepository.findByAgrupacion_Id(agrupacionId);
-
-        return imagenes.stream()
-                .map(imagenMapper::toResponse)
-                .collect(Collectors.toList());
+        return imagenes.stream().map(imagenMapper::toResponse).collect(Collectors.toList());
     }
 
-    // =======================================================
-    // 3. ELIMINAR IMAGEN (DELETE) - AHORA EN CLOUDINARY
-    // =======================================================
     @Transactional
     public void eliminarImagen(Long id) throws IOException {
         Imagen imagen = imagenRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Imagen", "id", id));
 
-        // 1. Eliminar el archivo de Cloudinary usando su public_id
-        cloudinary.uploader().destroy(imagen.getNombreFichero(), ObjectUtils.emptyMap());
+        // Borrado físico
+        Path rutaFichero = Paths.get(imagen.getRutaAbsoluta());
+        Files.deleteIfExists(rutaFichero);
 
-        // 2. Eliminar el metadato de la DB
+        // Borrado lógico (BD)
         imagenRepository.delete(imagen);
     }
-
-    // NOTA: El método cargarFicheroComoRecurso ya no es necesario
-    // porque las imágenes se sirven directamente desde la URL de Cloudinary.
 }

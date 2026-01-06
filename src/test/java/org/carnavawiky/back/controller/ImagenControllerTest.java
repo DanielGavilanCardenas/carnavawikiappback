@@ -1,10 +1,8 @@
 package org.carnavawiky.back.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.carnavawiky.back.config.FileStorageProperties;
 import org.carnavawiky.back.config.SecurityConfig;
 import org.carnavawiky.back.config.WebConfig;
-import org.carnavawiky.back.dto.ImagenRequest;
 import org.carnavawiky.back.dto.ImagenResponse;
 import org.carnavawiky.back.repository.RoleRepository;
 import org.carnavawiky.back.repository.UsuarioRepository;
@@ -42,13 +40,10 @@ public class ImagenControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
     private ImagenService imagenService;
 
-    // Mocks de infraestructura de seguridad obligatorios (según PersonaControllerTest y otros)
+    // Mocks de infraestructura de seguridad obligatorios
     @MockBean
     private JwtService jwtService;
     @MockBean
@@ -59,15 +54,9 @@ public class ImagenControllerTest {
     private RoleRepository roleRepository;
 
     private ImagenResponse imagenResponse;
-    private ImagenRequest imagenRequest;
 
     @BeforeEach
     void setUp() {
-        // Inicialización basada en ImagenRequest.java
-        imagenRequest = new ImagenRequest();
-        imagenRequest.setAgrupacionId(1L);
-        imagenRequest.setEsPortada(true);
-
         // Inicialización basada en ImagenResponse.java
         imagenResponse = new ImagenResponse();
         imagenResponse.setId(10L);
@@ -90,16 +79,13 @@ public class ImagenControllerTest {
                 "image-data".getBytes()
         );
 
-        // 2. Definimos la parte 'data' como un String JSON (no como un archivo JSON)
-        // Tu controlador espera un String, por lo que lo pasamos como un simple parámetro
-        String jsonRequest = objectMapper.writeValueAsString(imagenRequest);
+        when(imagenService.subirImagen(eq(1L), any(), eq(true))).thenReturn(imagenResponse);
 
-        when(imagenService.guardarImagen(any(), any(ImagenRequest.class))).thenReturn(imagenResponse);
-
-        // Usamos multipart pero pasando 'data' como parámetro de formulario
+        // Usamos multipart pasando parámetros individuales
         mockMvc.perform(multipart("/api/imagenes")
                         .file(filePart)
-                        .param("data", jsonRequest) // Enviamos el JSON como String plano
+                        .param("agrupacionId", "1")
+                        .param("esPortada", "true")
                         .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10L));
