@@ -242,6 +242,11 @@
             <version>2.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-spring-boot</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
