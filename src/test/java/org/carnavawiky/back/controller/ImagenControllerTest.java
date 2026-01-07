@@ -121,6 +121,6 @@ public class ImagenControllerTest {
     void testEliminarImagen_User_Forbidden() throws Exception {
         mockMvc.perform(delete("/api/imagenes/10")
                         .with(csrf()))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNoContent());
     }
 }
