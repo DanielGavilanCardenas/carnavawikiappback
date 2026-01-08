@@ -31,9 +31,17 @@ public class AuthController {
     // 2. LOGIN (POST)
     // =======================================================
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> authenticateUser(@Valid @RequestBody LoginRequest request) {
-        TokenResponse tokens = authService.login(request);
-        return ResponseEntity.ok(tokens);
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest request) {
+        try {
+            TokenResponse tokens = authService.login(request);
+            return ResponseEntity.ok(tokens);
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Usuario o contraseña incorrectos");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error interno en el servidor");
+        }
     }
 
     // =======================================================
