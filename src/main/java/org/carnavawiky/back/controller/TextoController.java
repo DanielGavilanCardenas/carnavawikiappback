@@ -31,6 +31,15 @@ public class TextoController {
         return textoService.save(texto);
     }
 
+    /**
+     * Endpoint para guardado masivo de textos.
+     */
+    @PostMapping("/bulk")
+    public ResponseEntity<Void> updateBulk(@RequestBody List<Texto> textos) {
+        textoService.saveAll(textos);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{key}")
     public Texto update(@PathVariable String key, @RequestBody String value) {
         return textoService.update(key, value);

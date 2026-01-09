@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TextoService {
@@ -37,5 +38,23 @@ public class TextoService {
     @Transactional
     public void delete(String key) {
         textoRepository.deleteByKey(key);
+    }
+
+    /**
+     * Guarda o actualiza múltiples textos de forma masiva.
+     */
+    @Transactional
+    public void saveAll(List<Texto> textos) {
+        for (Texto textoEnviado : textos) {
+            Optional<Texto> textoExistente = textoRepository.findByKey(textoEnviado.getKey());
+
+            if (textoExistente.isPresent()) {
+                Texto t = textoExistente.get();
+                t.setValue(textoEnviado.getValue());
+                textoRepository.save(t);
+            } else {
+                textoRepository.save(textoEnviado);
+            }
+        }
     }
 }

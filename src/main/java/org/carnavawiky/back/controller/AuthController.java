@@ -9,6 +9,8 @@ import org.carnavawiky.back.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,12 +37,14 @@ public class AuthController {
         try {
             TokenResponse tokens = authService.login(request);
             return ResponseEntity.ok(tokens);
-        } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Usuario o contraseña incorrectos");
+        } catch (DisabledException e) {
+            // Esto devolverá un 401 más descriptivo si no usas el GlobalHandler
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Cuenta deshabilitada. Revisa tu email.");
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error interno en el servidor");
+            // Este es el que te está devolviendo el 500 actualmente
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error técnico: " + e.getMessage());
         }
     }
 
