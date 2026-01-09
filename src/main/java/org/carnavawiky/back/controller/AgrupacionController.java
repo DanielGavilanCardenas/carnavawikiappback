@@ -3,11 +3,11 @@ package org.carnavawiky.back.controller;
 import jakarta.validation.Valid;
 import org.carnavawiky.back.dto.AgrupacionRequest;
 import org.carnavawiky.back.dto.AgrupacionResponse;
-import org.carnavawiky.back.dto.PageResponse; // << IMPORTAR
+import org.carnavawiky.back.dto.PageResponse;
 import org.carnavawiky.back.dto.VideoResponse;
 import org.carnavawiky.back.service.AgrupacionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable; // << IMPORTAR
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
