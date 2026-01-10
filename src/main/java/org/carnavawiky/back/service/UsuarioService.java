@@ -2,7 +2,7 @@ package org.carnavawiky.back.service;
 
 import org.carnavawiky.back.dto.UsuarioRequest;
 import org.carnavawiky.back.dto.UsuarioResponse;
-import org.carnavawiky.back.dto.PageResponse; // <-- NUEVA IMPORTACIÓN
+import org.carnavawiky.back.dto.PageResponse;
 import org.carnavawiky.back.exception.BadRequestException;
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.UsuarioMapper;
@@ -11,13 +11,14 @@ import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.RoleRepository;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page; // <-- NUEVA IMPORTACIÓN
-import org.springframework.data.domain.Pageable; // <-- NUEVA IMPORTACIÓN
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,135 +27,101 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
-
     @Autowired
-    private RoleRepository roleRepository; // Necesario para gestionar los roles
-
+    private RoleRepository roleRepository;
     @Autowired
-    private PasswordEncoder passwordEncoder; // Necesario para cifrar contraseñas
-
+    private PasswordEncoder passwordEncoder;
     @Autowired
     private UsuarioMapper usuarioMapper;
 
-
-    // =======================================================
-    // 1. CREAR (POST)
-    // =======================================================
-
-    @Transactional
-    public UsuarioResponse crearUsuario(UsuarioRequest request) {
-        // Validación de unicidad de username y email
-        if (Boolean.TRUE.equals(usuarioRepository.existsByUsername(request.getUsername()))) {
-            throw new BadRequestException("El nombre de usuario ya está en uso.");
-        }
-        if (Boolean.TRUE.equals(usuarioRepository.existsByEmail(request.getEmail()))) {
-            throw new BadRequestException("El email ya está en uso.");
-        }
-
-        // 1. Cargar Roles
-        Set<Role> roles = request.getRoleIds().stream()
-                .map(id -> roleRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role", "id", id)))
-                .collect(Collectors.toSet());
-
-        // 2. Crear y configurar Usuario
-        Usuario usuario = new Usuario();
-        usuario.setUsername(request.getUsername());
-        usuario.setEmail(request.getEmail());
-        usuario.setPassword(passwordEncoder.encode(request.getPassword())); // Cifrar la contraseña
-        usuario.setRoles(roles);
-        usuario.setEnabled(request.getEnabled());
-        // activationToken se dejará nulo, ya que el admin lo activa directamente
-
-        // 3. Guardar y retornar
-        Usuario nuevoUsuario = usuarioRepository.save(usuario);
-        return usuarioMapper.toResponse(nuevoUsuario);
-    }
-
-    // =======================================================
-    // 2. OBTENER POR ID (GET /ID)
-    // =======================================================
-
     @Transactional(readOnly = true)
-    public UsuarioResponse obtenerUsuarioPorId(Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "id", id));
-
-        return usuarioMapper.toResponse(usuario);
-    }
-
-    // =======================================================
-    // 3. OBTENER TODOS (GET) - CON PAGINACIÓN Y BÚSQUEDA
-    // REEMPLAZA a 'public List<UsuarioResponse> obtenerTodosUsuarios()'
-    // =======================================================
-    @Transactional(readOnly = true)
-    public PageResponse<UsuarioResponse> obtenerTodosUsuarios(Pageable pageable, String search) { // << NUEVA FIRMA
-
-        Page<Usuario> usuarioPage;
-
+    public PageResponse<UsuarioResponse> obtenerTodosUsuarios(Pageable pageable, String search) {
+        Page<Usuario> usuariosPage;
         if (StringUtils.hasText(search)) {
-            // Si hay búsqueda, busca por username o email
-            usuarioPage = usuarioRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(search, search, pageable);
+            usuariosPage = usuarioRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(search, search, pageable);
         } else {
-            // Si no hay búsqueda, usa la paginación normal
-            usuarioPage = usuarioRepository.findAll(pageable);
+            usuariosPage = usuarioRepository.findAll(pageable);
         }
 
-        // 2. Mapear el contenido de la página a UsuarioResponse
-        Page<UsuarioResponse> responsePage = usuarioPage.map(usuarioMapper::toResponse);
+        List<UsuarioResponse> contenido = usuariosPage.getContent().stream()
+                .map(usuarioMapper::toResponse)
+                .collect(Collectors.toList());
 
-        // 3. Construir y retornar el objeto PageResponse
-        return PageResponse.fromPage(responsePage);
+        return PageResponse.<UsuarioResponse>builder()
+                .content(contenido)
+                .pageNumber(usuariosPage.getNumber())
+                .pageSize(usuariosPage.getSize())
+                .totalElements(usuariosPage.getTotalElements())
+                .totalPages(usuariosPage.getTotalPages())
+                .build();
     }
-
-    // =======================================================
-    // 4. ACTUALIZAR (PUT /ID)
-    // =======================================================
-
 
     @Transactional
     public UsuarioResponse actualizarUsuario(Long id, UsuarioRequest request) {
-        Usuario usuarioExistente = usuarioRepository.findById(id)
+        Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "id", id));
 
-        // 1. Validar unicidad de email (solo si cambia)
-        if (!usuarioExistente.getEmail().equals(request.getEmail()) && Boolean.TRUE.equals( usuarioRepository.existsByEmail(request.getEmail()))) {
-            throw new BadRequestException("El email ya está en uso por otro usuario.");
+        if (request.getEmail() != null && !usuario.getEmail().equalsIgnoreCase(request.getEmail())) {
+            if (usuarioRepository.existsByEmail(request.getEmail())) {
+                throw new BadRequestException("El email ya está en uso.");
+            }
+            usuario.setEmail(request.getEmail());
         }
 
-        // 2. Actualizar campos
-
-        usuarioExistente.setEmail(request.getEmail());
-
-        // Si se proporciona una nueva contraseña, cifrarla y actualizarla
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            usuarioExistente.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (StringUtils.hasText(request.getPassword())) {
+            usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        usuarioExistente.setEnabled(request.getEnabled());
+        if (request.getEnabled() != null) {
+            usuario.setEnabled(request.getEnabled());
+        }
 
-        // 3. Actualizar Roles (Lógica que debe estar correcta)
-        Set<Role> nuevosRoles = request.getRoleIds().stream()
-                .map(roleId -> roleRepository.findById(roleId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role", "id", roleId)))
-                .collect(Collectors.toSet());
-        usuarioExistente.setRoles(nuevosRoles);
+        // CORRECCIÓN AQUÍ: Añadimos .filter(Objects::nonNull)
+        if (request.getRoleIds() != null) {
+            Set<Role> nuevosRoles = request.getRoleIds().stream()
+                    .filter(java.util.Objects::nonNull) // <--- Evita que IDs nulos rompan la búsqueda
+                    .map(rId -> roleRepository.findById(rId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Role", "id", rId)))
+                    .collect(Collectors.toSet());
+            usuario.setRoles(nuevosRoles);
+        }
 
-        // 4. Guardar y retornar
-        Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
-        return usuarioMapper.toResponse(usuarioActualizado);
+        return usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }
-
-    // =======================================================
-    // 5. ELIMINAR (DELETE /ID)
-    // =======================================================
 
     @Transactional
     public void eliminarUsuario(Long id) {
-        // Se puede añadir lógica aquí para evitar que un admin se elimine a sí mismo
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("Usuario", "id", id);
         }
         usuarioRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public UsuarioResponse obtenerUsuarioPorId(Long id) {
+        return usuarioRepository.findById(id)
+                .map(usuarioMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "id", id));
+    }
+
+    @Transactional
+    public UsuarioResponse crearUsuario(UsuarioRequest request) {
+        if (usuarioRepository.existsByUsername(request.getUsername())) {
+            throw new BadRequestException("El nombre de usuario ya existe.");
+        }
+        Usuario usuario = new Usuario();
+        usuario.setUsername(request.getUsername());
+        usuario.setEmail(request.getEmail());
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        usuario.setEnabled(request.getEnabled() != null ? request.getEnabled() : true);
+
+        if (request.getRoleIds() != null) {
+            Set<Role> roles = request.getRoleIds().stream()
+                    .map(rId -> roleRepository.findById(rId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Role", "id", rId)))
+                    .collect(Collectors.toSet());
+            usuario.setRoles(roles);
+        }
+        return usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }
 }

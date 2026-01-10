@@ -75,13 +75,6 @@ public class AuthService {
         nuevoUsuario.setEmail(request.getEmail());
         nuevoUsuario.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", Role.RoleName.ROLE_USER.name()));
-
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
-        nuevoUsuario.setRoles(roles);
-
         nuevoUsuario.setEnabled(false);
 
         Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
@@ -148,26 +141,32 @@ public class AuthService {
     @Transactional
     public void requestPasswordReset(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "email", email)); // Es mejor no dar detalles exactos, pero para el desarrollo está bien.
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "email", email));
 
-        // 1. Generar token y fecha de expiración (ej. 1 hora)
         String resetToken = UUID.randomUUID().toString();
         LocalDateTime expiryDate = LocalDateTime.now().plusHours(1);
 
-        // 2. Guardar token y fecha en el usuario
         usuario.setResetToken(resetToken);
         usuario.setResetTokenExpiryDate(expiryDate);
         usuarioRepository.save(usuario);
 
-        // 3. Enviar email de recuperación (Debe redirigir a una página del frontend que envíe el token al endpoint de reseteo)
-        String resetUrl = baseUrl + "/reset-password?token=" + resetToken; // URL del Frontend
+        // IMPORTANTE: Apuntamos al componente del Frontend
+        String resetUrl = "http://localhost:4200/reset-password?token=" + resetToken;
 
         String subject = "Recuperación de Contraseña Carnavawiky";
-        String body = "¡Hola!\n\n"
-                + "Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace. "
-                + "Este enlace caducará en 1 hora.\n\n"
-                + resetUrl + "\n\n"
-                + "Si no solicitaste esto, puedes ignorar este correo.";
+        String body = "<html><body style='font-family: Arial, sans-serif; color: #333;'>" +
+                "  <div style='max-width: 600px; margin: 20px auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;'>" +
+                "    <h2 style='color: #0d6efd;'>¿Olvidaste tu contraseña?</h2>" +
+                "    <p>Has solicitado restablecer tu contraseña para Carnavawiky. Haz clic en el botón de abajo:</p>" +
+                "    <div style='text-align: center; margin: 30px 0;'>" +
+                "      <a href='" + resetUrl + "' style='background-color: #0d6efd; color: white; padding: 15px 25px; " +
+                "         text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>" +
+                "        Cambiar mi contraseña" +
+                "      </a>" +
+                "    </div>" +
+                "    <p style='font-size: 0.8em; color: #777;'>Este enlace caducará en 1 hora. Si no lo solicitaste, puedes ignorarlo.</p>" +
+                "  </div>" +
+                "</body></html>";
 
         emailService.sendEmail(usuario.getEmail(), subject, body);
     }

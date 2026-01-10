@@ -1,8 +1,10 @@
 package org.carnavawiky.back.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,14 +14,18 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendEmail(String toEmail, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        message.setFrom("carnavawiky@noreply.com");
-        message.setTo(toEmail);
-        message.setSubject(subject);
-        message.setText(body);
+            helper.setFrom("carnavawiky@noreply.com");
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(body, true); // 'true' activa el soporte HTML
 
-        // Envío (esto puede ser asíncrono en un entorno de producción, pero lo hacemos simple aquí)
-        mailSender.send(message);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar el email HTML", e);
+        }
     }
 }

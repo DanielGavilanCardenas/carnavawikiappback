@@ -51,6 +51,7 @@ public class AuthController {
     // =======================================================
     // 3. ACTIVACIÓN (GET)
     // =======================================================
+    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/activate/{token}")
     public ResponseEntity<String> activateAccount(@PathVariable String token) {
         authService.activateAccount(token);

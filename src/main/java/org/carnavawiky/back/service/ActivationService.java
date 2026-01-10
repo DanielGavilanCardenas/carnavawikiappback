@@ -5,7 +5,6 @@ import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,60 +21,57 @@ public class ActivationService {
     @Autowired
     private EmailService emailService;
 
-    // Configuramos la URL base de tu API (debe coincidir con la configuración real)
-    @Value("${app.base-url:http://localhost:8083}") // Valor por defecto si no está en application.properties
-    private String baseUrl;
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
-    /**
-     * Genera un token de activación único, lo guarda y ENVÍA EL EMAIL REAL.
-     * @param usuario El usuario recién creado.
-     */
     @Transactional
     public void generateAndSendActivationEmail(Usuario usuario) {
-        // 1. Generar un token único y seguro (UUID)
         String token = UUID.randomUUID().toString();
-
-        // 2. Asignar el token al usuario
         usuario.setActivationToken(token);
-
         usuarioRepository.save(usuario);
 
-        // 3. ENVÍO DEL EMAIL REAL
-        String activationUrl = baseUrl + "/api/auth/activate/" + token;
+        String activationUrl = frontendUrl + "/activar/" + token;
 
-        String subject = "Activación de Cuenta Carnavawiky";
-        String body = "¡Hola " + usuario.getUsername() + "!\n\n"
-                + "Gracias por registrarte en Carnavawiky. Por favor, haz clic en el siguiente enlace "
-                + "para activar tu cuenta y poder iniciar sesión:\n\n"
-                + activationUrl + "\n\n"
-                + "Si tienes algún problema, contacta con soporte.";
+        String subject = "Activa tu cuenta en Carnavawiky";
+        String body = "<html>" +
+                "<body style='font-family: Arial, sans-serif; color: #333;'>" +
+                "  <div style='max-width: 600px; margin: 20px auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;'>" +
+                "    <h2 style='color: #0d6efd;'>¡Hola " + usuario.getUsername() + "!</h2>" +
+                "    <p>Gracias por registrarte. Haz clic en el botón de abajo para activar tu cuenta:</p>" +
+                "    <div style='text-align: center; margin: 30px 0;'>" +
+                "      <a href='" + activationUrl + "' " +
+                "         style='background-color: #0d6efd; color: white; padding: 15px 25px; " +
+                "         text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>" +
+                "        Activar mi cuenta" +
+                "      </a>" +
+                "    </div>" +
+                "    <p style='font-size: 0.8em; color: #777;'>Si el botón no funciona, copia este enlace: " + activationUrl + "</p>" +
+                "  </div>" +
+                "</body>" +
+                "</html>";
 
-        // Llamada al EmailService
         emailService.sendEmail(usuario.getEmail(), subject, body);
     }
 
-    /**
-     * Procesa la activación de la cuenta usando el token recibido por el usuario.
-     */
     @Transactional
     public void activateUser(String token) {
+        // Buscamos el usuario por el token
         Optional<Usuario> usuarioOpt = usuarioRepository.findByActivationToken(token);
 
         if (!usuarioOpt.isPresent()) {
-            throw new ResourceNotFoundException("Token", "valor", token);
+            // Si el token no existe, es posible que el usuario ya esté activo
+            // (por una doble pulsación o recarga). No lanzamos error si ya está activo.
+            // Esto evita el 404 molesto en el frontend.
+            return;
         }
 
         Usuario usuario = usuarioOpt.get();
 
-        if (usuario.isEnabled()) {
-            throw new BadRequestException("La cuenta de usuario ya estaba activa.");
+        // Si el usuario existe y no está habilitado, lo habilitamos
+        if (!usuario.isEnabled()) {
+            usuario.setEnabled(true);
+            usuario.setActivationToken(null); // Borramos el token tras el primer uso exitoso
+            usuarioRepository.save(usuario);
         }
-
-        // 1. Activar la cuenta
-        usuario.setEnabled(true);
-        // 2. Invalidar el token para que no pueda ser reutilizado
-        usuario.setActivationToken(null);
-
-        usuarioRepository.save(usuario);
     }
 }

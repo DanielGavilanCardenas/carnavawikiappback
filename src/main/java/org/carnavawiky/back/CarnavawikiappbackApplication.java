@@ -51,11 +51,6 @@ public class CarnavawikiappbackApplication {
             // DATA SEEDING DE ROLES
             // =======================================================
             // Usamos findByName para asegurar la idempotencia en DBs permanentes
-            if (roleRepository.findByName(RoleName.ROLE_USER).isEmpty()) {
-                Role roleUser = new Role();
-                roleUser.setName(RoleName.ROLE_USER);
-                roleRepository.save(roleUser);
-            }
 
             if (roleRepository.findByName(RoleName.ROLE_ADMIN).isEmpty()) {
                 Role roleAdmin = new Role();

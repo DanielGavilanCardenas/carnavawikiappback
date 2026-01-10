@@ -20,7 +20,6 @@ public class Role {
     // Enum para definir los roles posibles en la aplicación
     public enum RoleName {
         ROLE_ADMIN,
-        ROLE_USER,
         ROLE_ESPECIALISTO
     }
 }
