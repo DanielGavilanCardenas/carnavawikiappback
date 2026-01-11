@@ -20,12 +20,6 @@ public class ImagenMapper {
         response.setUrlPublica(entity.getUrlPublica());
         response.setEsPortada(entity.getEsPortada() != null && entity.getEsPortada());
 
-        // Mapeo de Agrupación
-        if (entity.getAgrupacion() != null) {
-            response.setAgrupacionId(entity.getAgrupacion().getId());
-            response.setAgrupacionNombre(entity.getAgrupacion().getNombre());
-        }
-
         return response;
     }
 }

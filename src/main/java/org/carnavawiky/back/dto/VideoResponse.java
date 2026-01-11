@@ -19,3 +19,4 @@ public class VideoResponse {
     private Long agrupacionId;
     private String agrupacionNombre; // Opcional, para facilitar el frontal
 }
+

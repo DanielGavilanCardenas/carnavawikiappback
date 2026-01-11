@@ -1,12 +1,10 @@
 package org.carnavawiky.back.service;
 
-import org.carnavawiky.back.dto.AgrupacionRequest;
-import org.carnavawiky.back.dto.AgrupacionResponse;
-import org.carnavawiky.back.dto.PageResponse;
-import org.carnavawiky.back.dto.VideoResponse;
+import org.carnavawiky.back.dto.*;
 import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.mapper.AgrupacionMapper;
 import org.carnavawiky.back.model.Agrupacion;
+import org.carnavawiky.back.model.Imagen;
 import org.carnavawiky.back.model.Localidad;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.AgrupacionRepository;
@@ -89,7 +87,7 @@ public class AgrupacionService {
             agrupacionPage = agrupacionRepository.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(search, search, pageable);
         } else {
             // Paginación simple
-            agrupacionPage = agrupacionRepository.findAll(pageable);
+            agrupacionPage = agrupacionRepository.findAllWithDetails(pageable);
         }
 
         // Mapear el contenido de la página a AgrupacionResponse
@@ -160,5 +158,53 @@ public class AgrupacionService {
                         .agrupacionNombre(agrupacion.getNombre())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AgrupacionFullResponse> obtenerTodasCompleto() {
+        return agrupacionRepository.findAll().stream()
+                .map(this::mapToFullResponse)
+                .toList();
+    }
+
+    private AgrupacionFullResponse mapToFullResponse(Agrupacion a) {
+        return new AgrupacionFullResponse(
+                a.getId(),
+                a.getNombre(),
+                a.getAnho(),
+                a.isOficial(), // << AÑADIDO: Ahora coincide con el constructor del Record
+                a.getModalidad().name(),
+                a.getLocalidad() != null ? a.getLocalidad().getNombre() : "Desconocida",
+
+                // Mapeo de Objetos Imagen Completos
+                a.getImagenes().stream()
+                        .map(img -> ImagenResponse.builder()
+                                .id(img.getId())
+                                .nombreFichero(img.getNombreFichero())
+                                .urlPublica(img.getUrlPublica())
+                                .esPortada(img.getEsPortada())
+                                .build())
+                        .toList(),
+
+                // Mapeo de Componentes
+                a.getComponentes().stream()
+                        .map(c -> new ComponenteDetalleDto(
+                                c.getPersona().getNombreReal(),
+                                c.getPersona().getApodo(),
+                                c.getRol().name()
+                        )).toList(),
+
+                // Mapeo de Vídeos
+                a.getVideos().stream()
+                        .map(v -> VideoResponse.builder()
+                                .id(v.getId())
+                                .titulo(v.getTitulo())
+                                .urlYoutube(v.getUrlYoutube())
+                                .verificado(v.isVerificado())
+                                .agrupacionId(a.getId())
+                                .agrupacionNombre(a.getNombre())
+                                .build())
+                        .toList()
+        );
     }
 }

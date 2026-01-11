@@ -1,16 +1,17 @@
 package org.carnavawiky.back.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ImagenResponse {
-
     private Long id;
     private String nombreFichero;
-    private String urlPublica; // La URL que el frontend usará para mostrar la imagen
+    private String urlPublica;
     private Boolean esPortada;
-
-    // ID de la Agrupación a la que pertenece
-    private Long agrupacionId;
-    private String agrupacionNombre;
 }

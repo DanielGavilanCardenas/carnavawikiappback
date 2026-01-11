@@ -42,24 +42,28 @@ public class SecurityConfig {
                         // 1. Endpoints públicos de Auth y Swagger
                         .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // 2. TEXTOS: Acceso público para lectura (Soluciona tu error 403)
+                        // 2. RECURSOS ESTÁTICOS (IMÁGENES): Acceso público total a la carpeta física mapeada
+                        // Esta es la línea clave para solucionar el error 403 al acceder a /recursos/imagenes/
+                        .requestMatchers("/recursos/**").permitAll()
+
+                        // 3. TEXTOS: Acceso público para lectura
                         .requestMatchers(HttpMethod.GET, "/api/textos/**").permitAll()
                         .requestMatchers("/api/textos/**").hasRole(ADMIN)
 
-                        // 3. IMÁGENES: Acceso público para verlas (GET)
+                        // 4. API IMÁGENES: Mantener si tienes controladores específicos en esa ruta
                         .requestMatchers(HttpMethod.GET, "/api/imagenes/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/imagenes/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/imagenes/**").permitAll()
 
-                        // 4. AGRUPACIONES y CATEGORÍAS: Lectura pública
+                        // 5. AGRUPACIONES y CATEGORÍAS: Lectura pública
                         .requestMatchers(HttpMethod.GET, "/api/agrupaciones/**", "/api/categorias/**").permitAll()
                         .requestMatchers("/api/agrupaciones/**", "/api/categorias/**").hasRole(ADMIN)
 
-                        // 5. Roles específicos
+                        // 6. Roles específicos
                         .requestMatchers("/api/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/especialisto/**").hasAnyRole(ADMIN, "ESPECIALISTO")
 
-                        // 6. Cualquier otra petición requiere login
+                        // 7. Cualquier otra petición requiere login
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -86,7 +90,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // Mantenemos los orígenes permitidos, incluyendo tu frontend Angular (4200)
+        // Orígenes permitidos incluyendo los puertos locales detectados
         config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:8081", "http://localhost:8083"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));

@@ -1,10 +1,7 @@
 package org.carnavawiky.back.controller;
 
 import jakarta.validation.Valid;
-import org.carnavawiky.back.dto.AgrupacionRequest;
-import org.carnavawiky.back.dto.AgrupacionResponse;
-import org.carnavawiky.back.dto.PageResponse;
-import org.carnavawiky.back.dto.VideoResponse;
+import org.carnavawiky.back.dto.*;
 import org.carnavawiky.back.service.AgrupacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -93,5 +90,13 @@ public class AgrupacionController {
     @GetMapping("/{id}/videos")
     public List<VideoResponse> getVideosByAgrupacion(@PathVariable Long id) {
         return agrupacionService.obtenerVideosDeAgrupacion(id);
+    }
+
+    // =======================================================
+    // OBTENER TODAS CON DETALLES (IMÁGENES Y COMPONENTES)
+    // =======================================================
+    @GetMapping("/completo")
+    public ResponseEntity<List<AgrupacionFullResponse>> obtenerTodasCompleto() {
+        return ResponseEntity.ok(agrupacionService.obtenerTodasCompleto());
     }
 }

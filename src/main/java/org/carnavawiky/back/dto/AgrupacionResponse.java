@@ -13,6 +13,7 @@ public class AgrupacionResponse {
     private LocalDateTime fechaAlta;
     private String nombreUsuarioCreador;
     private Integer anho;
+    private boolean oficial;
     private Modalidad modalidad;
     private Long localidadId;
     private String localidadNombre;

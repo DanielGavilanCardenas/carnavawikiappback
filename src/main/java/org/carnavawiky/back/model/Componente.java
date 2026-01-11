@@ -7,10 +7,7 @@ import lombok.AllArgsConstructor;
 
 @Data
 @Entity
-@Table(name = "componente", uniqueConstraints = {
-        // Restricción Única Compuesta: Una Persona solo puede tener un registro de componente por Agrupación.
-        @UniqueConstraint(columnNames = {"persona_id", "agrupacion_id"}, name = "UK_PERSONA_AGRUPACION")
-})
+@Table(name = "componente")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Componente {

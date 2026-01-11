@@ -19,14 +19,18 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Convertimos la ruta del properties a una URI válida para Spring (file:/...)
-        String locationUri = Paths.get(uploadLocation).toUri().toString();
+        // Forzamos que la ruta empiece por file:/ y termine en /
+        String location = uploadLocation.replace("\\", "/");
+        if (!location.endsWith("/")) {
+            location += "/";
+        }
+        if (!location.startsWith("file:")) {
+            location = "file:/" + location;
+        }
 
-        // Mapea las peticiones que entren por /api/imagenes/ al directorio físico
-        registry.addResourceHandler("/api/imagenes/**")
-                .addResourceLocations(locationUri);
+        registry.addResourceHandler("/recursos/imagenes/**")
+                .addResourceLocations(location);
 
-        // Es buena práctica llamar al super si no hay más configuraciones
         WebMvcConfigurer.super.addResourceHandlers(registry);
     }
 }

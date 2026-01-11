@@ -1,7 +1,5 @@
 package org.carnavawiky.back.service;
 
-import org.carnavawiky.back.exception.BadRequestException;
-import org.carnavawiky.back.exception.ResourceNotFoundException;
 import org.carnavawiky.back.model.Usuario;
 import org.carnavawiky.back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
